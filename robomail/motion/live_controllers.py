@@ -24,7 +24,6 @@ class GotoPoseLive:
         self.T = T
         self.initialize = True # determines whether to start the skill
         self.cartesian_impedances = cartesian_impedances
-        # self.cartesian_impedances = (0.3*np.array(FC.DEFAULT_CARTESIAN_IMPEDANCES)).tolist()
         self.fa = FrankaArm()
         self.pose = self.fa.get_pose() # pose to send to the skill
         print(type(self.pose), "intialize0")
@@ -96,8 +95,8 @@ class GotoPoseLive:
     def start(self):
         # start run() in a new thread
         self.running = True
-        thread = threading.Thread(target=self.run, daemon=True)
-        thread.start()
+        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread.start()
     
     def stop(self):
         # stop runing the thread by setting the 'running' flag to false, then waiting for 
@@ -167,7 +166,7 @@ class GotoJointsLive:
             
             else: # send update message
                 # print("update go to pose", self.pose.translation)
-                timestamp = rospy.Time.now().to_timevoe() - init_time
+                timestamp = rospy.Time.now().to_time() - init_time # update time stamp
 
                 # ross messages:
                 traj_gen_proto_msg = JointPositionSensorMessage(

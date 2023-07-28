@@ -1,0 +1,11 @@
+README.md
+setup.py
+mail_franka_package.egg-info/PKG-INFO
+mail_franka_package.egg-info/SOURCES.txt
+mail_franka_package.egg-info/dependency_links.txt
+mail_franka_package.egg-info/top_level.txt
+robomail/__init__.py
+robomail/communication/__init__.py
+robomail/communication/dictionary_messenger.py
+robomail/motion/__init__.py
+robomail/motion/live_controllers.py
