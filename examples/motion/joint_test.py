@@ -11,21 +11,23 @@ pose.translation = np.array([.6, 0, .4])
 fa.goto_pose(pose)
 # time.sleep(10)
 joints = fa.get_joints()
+print('start joints:', joints)
 
 durration = 10
-hz = 2
+hz = 10
 joint_4 = np.linspace(-np.pi/6, np.pi/6, int(hz*durration)) + joints[4]
-
+# print('joint_4:', joint_4)
 
 goal_joints = np.copy(joints)
 goal_joints[4] = joint_4[0]
-print('go to joints start')
-fa.goto_joints(joints, ignore_virtual_walls=True)
-print('go to joints stop')
 controller = GotoJointsLive(ignore_virtual_walls=True)
+print('controller init')
 controller.set_goal_joints(goal_joints)
+print('controller set')
+print('controller start')
 controller.start()
-time.sleep(2)
+time.sleep(5)
+print('start motion')
 
 start_time = time.time()
 last_time = -1
@@ -40,5 +42,7 @@ while(elapsed_time < durration):
         controller.set_goal_joints(goal_joints)
     elapsed_time = time.time() - start_time
 
+print('finished with updates')
+time.sleep(2)
 print('stopping')
 controller.stop()
