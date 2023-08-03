@@ -1,1 +1,1 @@
-from .dictionary_messenger import DictionaryMessenger
+from .pickle_messanger import PickleMessenger
