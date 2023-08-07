@@ -53,21 +53,21 @@ class PickleMessenger:
         self.connection.connect((self.host, self.port))
         print(f"Connected to {self.host}:{self.port}.")
 
-    def send_object(self, send_object: Any, object_name:str) -> None:
+    def send_object(self, object_name:str, send_object: Any) -> None:
         """
         Sends an object over the socket connection.
-        :param send_object: Object to send.
         :param object_name: Name of object to send.
+        :param send_object: Object to send.
         :return: None
         """
         pickled_dict: bytes = pickle.dumps(obj={"name":object_name, 'data':send_object})
         self.connection.sendall(pickled_dict)
         print("object sent successfully.")
 
-    def receive_object(self) -> tuple[Any, str]:
+    def receive_object(self) -> tuple[str, Any]:
         """
         Receives an object over the socket connection.
-        :return: Tuple of (received object, object name).
+        :return: Tuple of (object name, received object).
         """
         pickled_dict: bytes = self.connection.recv(4096)
         received_object: Dict[str, Any] = pickle.loads(pickled_dict)
@@ -75,7 +75,7 @@ class PickleMessenger:
         name: str = received_object['name']
         print("Received object:")
         print(received_object)
-        return data_object, name
+        return name, data_object
 
     def close(self) -> None:
         """
