@@ -1,6 +1,7 @@
 import robomail.communication as com
 import numpy as np
 import time
+import cv2
 
 # Create a new reciever object
 IP:str = '172.26.30.146'
@@ -11,9 +12,14 @@ messenger = com.FullMessenger(IP_Adress=IP, port=PORT, is_host=True)
 messenger.start()
 
 print('start sleep')
-time.sleep(10)
+time.sleep(3)
 print('end sleep')
 
 # Send an object
 messenger.send_object(send_object={'test': np.array([1, 2, 3, 4])}, object_name='test')
-time.sleep(10)
+time.sleep(3)
+
+messenger.send_object(object_name = "image", send_object=cv2.imread(filename='/home/aigeorge/research/mail-robotics-package/examples/Communication/test.png'))
+time.sleep(3)
+print('stopping')
+messenger.stop()

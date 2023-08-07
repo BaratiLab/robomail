@@ -27,7 +27,6 @@ class FullMessenger():
         Ran in a seperate thread. Continuously listens for new messages.
         :return: None
         """
-        self.messenger.start()
         self.running = True
         while self.running:
             new_message: Tuple[str, Any] = self.messenger.receive_object()
@@ -45,6 +44,7 @@ class FullMessenger():
         Starts the socket connection and the listening thread.
         :return: None
         """
+        self.messenger.start()
         self.reciever_thread = threading.Thread(target=self.listen)
         self.reciever_thread.start()
 
