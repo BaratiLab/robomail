@@ -3,7 +3,7 @@ import numpy as np
 import time
 
 # Create a new reciever object
-IP:str = '127.0.0.1'
+IP:str = '172.26.30.146'
 PORT:int = 5000
 messenger = com.FullMessenger(IP_Adress=IP, port=PORT, is_host=True)
 

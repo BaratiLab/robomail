@@ -31,6 +31,8 @@ class FullMessenger():
         self.running = True
         while self.running:
             new_message: Tuple[str, Any] = self.messenger.receive_object()
+            if new_message[0] not in self.recieved_messgaes.keys():
+                self.recieved_messgaes[new_message[0]] = []
             self.recieved_messgaes[new_message[0]].append(new_message[1])
             self.last_message = new_message
             self.num_messages_recieved += 1
