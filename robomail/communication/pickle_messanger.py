@@ -68,6 +68,7 @@ class PickleMessenger:
 
         # Send the size of the pickled data first
         size_data = len(pickled_dict).to_bytes(8, byteorder='big')
+        print(f"Sending object of size {len(pickled_dict)}.")
         self.connection.sendall(size_data)
 
         # Send the pickled data in chunks
