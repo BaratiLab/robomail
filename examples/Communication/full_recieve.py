@@ -1,6 +1,7 @@
 import robomail.communication as com
 import numpy as np
 # import time
+import cv2
 from typing import Any, Tuple
 
 # Create a new reciever object
@@ -16,3 +17,8 @@ received_message: Tuple[str, Any] = messenger.wait_for_next_message()
 
 print(f"Recieved object {received_message[0]} with value {received_message[1]}.")
 
+received_message: Tuple[str, Any] = messenger.wait_for_next_message()
+
+cv2.imshow('image', received_message[1])
+
+cv2.waitKey(0)
