@@ -18,6 +18,8 @@ print('end sleep')
 # Send an object
 messenger.send_object(send_object={'test': np.array([1, 2, 3, 4])}, object_name='test')
 time.sleep(3)
+messenger.stop()
+exit()
 
 print('start send')
 messenger.send_object(object_name = "image", send_object=cv2.imread(filename='/home/aigeorge/research/mail-robotics-package/examples/Communication/test.jpg'))
