@@ -14,6 +14,7 @@ class PickleMessenger:
         self.host:str = host_ip
         self.port: int = port
         self.is_host: bool = is_host
+        self.connection_open: bool = False
 
     def start(self) -> None:
         """
@@ -26,6 +27,8 @@ class PickleMessenger:
         else:
             self.connect()
             print('connecting to socket')
+        
+        self.connection_open = True
 
     def host_server(self) -> None:
         """
@@ -70,6 +73,10 @@ class PickleMessenger:
         :return: Tuple of (object name, received object).
         """
         pickled_dict: bytes = self.connection.recv(4096)
+        if len(pickled_dict) == 0:
+            print("Connection closed by other end.")
+            self.connection_open = False
+            return ("None", None)
         received_object: Dict[str, Any] = pickle.loads(pickled_dict)
         data_object: Any = received_object['data']
         name: str = received_object['name']
