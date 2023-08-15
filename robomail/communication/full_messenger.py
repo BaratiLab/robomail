@@ -60,7 +60,7 @@ class FullMessenger():
         self.reciever_thread.join()
         print('joined')
 
-    def send_object(self, send_object: Any, object_name: str) -> None:
+    def send_object(self, object_name: str, send_object: Any) -> None:
         """
         Sends an object over the socket connection.
         :param send_object: Object to send.
