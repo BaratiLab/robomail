@@ -1,2 +1,3 @@
 mail_robotics_package.egg-info/
 build/
+**/__pycache__/ 
