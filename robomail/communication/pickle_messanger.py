@@ -1,6 +1,6 @@
 import pickle
 import socket
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 class PickleMessenger:
     def __init__(self, host_ip:str, port:int, is_host:bool=True, packet_size:int = 4096) -> None:
@@ -79,7 +79,7 @@ class PickleMessenger:
 
         print("Object sent successfully.")
 
-    def receive_object(self) -> tuple[str, Any]:
+    def receive_object(self) -> Tuple[str, Any]:
         """
         Receives an object over the socket connection.
         :return: Tuple of (object name, received object).

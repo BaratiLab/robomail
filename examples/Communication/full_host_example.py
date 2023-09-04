@@ -27,3 +27,11 @@ print('end send')
 time.sleep(3)
 print('stopping')
 messenger.stop()
+
+
+while True:
+    message_name, message_object = messenger.wait_for_next_message()
+    if message_name == "move_to_command":
+        fa.goto_pose(message_object)
+    if message_name == "stop":
+        break
