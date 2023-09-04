@@ -108,6 +108,10 @@ class GotoPoseLive:
         print('joined')
         self.fa.stop_skill()
 
+    def get_pose(self):
+        # Returns the current pose
+        return self.fa.get_pose()
+
 
 class GotoJointsLive:
     def __init__(self, dt:float = 0.04, T:int = 1000, k_gains:List[float] = (0.5*np.array(FC.DEFAULT_K_GAINS)).tolist(), 
