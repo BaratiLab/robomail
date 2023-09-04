@@ -54,11 +54,8 @@ class FullMessenger():
         :return: None
         """
         self.running = False
-        print('stopping')
         self.messenger.close()
-        print('closed')
         self.reciever_thread.join()
-        print('joined')
 
     def send_object(self, send_object: Any, object_name: str) -> None:
         """
