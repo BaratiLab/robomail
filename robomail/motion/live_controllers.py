@@ -14,6 +14,9 @@ import time
 
 from typing import List, Dict, Tuple
 
+def reset_joints():
+    FrankaArm().reset_joints()
+
 class GotoPoseLive:
     def __init__(self, dt = 0.04, T = 1000, cartesian_impedances = None, step_size = 0.05):
         """
@@ -113,8 +116,8 @@ class GotoPoseLive:
         return self.fa.get_pose()
     
 
-class GotoGripLive:
-    def __init__(self, dt = 0.04, T = 1000):
+class GotoPoseGripperLive:
+    def __init__(self, dt = 0.04, T = 1000, cartesian_impedances = None, step_size = 0.05, min_gripper_distance = 0.03925):
         """
         NOTE: This code has not been commented or riggerously tested yet. It works (I think), but be careful when using it!
         dt: the time inbetween each communication loop
@@ -125,9 +128,18 @@ class GotoGripLive:
         """
         self.dt = dt
         self.T = T
+        self.cartesian_impedances = cartesian_impedances
         self.fa = FrankaArm()
-        print(type(self.pose), "intialize")
+        self.pose = self.fa.get_pose() # pose to send to the skill
+        self.goal_pose = deepcopy(self.pose) # pose the user provides
         self.running = False # flag used to stop the loop
+        self.step_size = step_size 
+        self.gripper_width = deepcopy(self.fa.get_gripper_width())
+        self.new_gripper_command = False
+        self.grasping = False
+        self.min_gripper_distance = min_gripper_distance # size of the object, to know when to use 'grasp = true'
+        self.grasp_command = {'grasp': False, 'width': min_gripper_distance}
+        self.max_gripper_width = 0.08
 
 
     def run(self):
@@ -146,6 +158,10 @@ class GotoGripLive:
             if (np.linalg.norm(delta_motion) > self.step_size):
                 self.pose.translation = (delta_motion/np.linalg.norm(delta_motion))*self.step_size + cur_pose.translation
                 
+            if self.new_gripper_command:
+                print("gripper command", self.grasp_command['width'], self.grasp_command['grasp'])
+                self.fa.goto_gripper(width=self.grasp_command['width'], grasp=self.grasp_command['grasp'], block=False)
+                self.new_gripper_command = False
 
             if initialize: # start the skill
                 if self.cartesian_impedances != None:
@@ -206,6 +222,30 @@ class GotoGripLive:
         # Returns the current pose
         return self.fa.get_pose()
 
+    def set_gripper_width(self, gripper_width:float):
+        # sets the gripper pose. This is used to control the robot.
+        self.new_gripper_command = True
+
+        if gripper_width < self.min_gripper_distance:
+            if not self.grasping:
+                self.grasp_command = {'grasp': False, 'width': self.min_gripper_distance}
+                self.gripper_width = self.min_gripper_distance
+                self.grasping = True
+            else:
+                self.new_gripper_command = False
+        
+        elif gripper_width > self.max_gripper_width:
+            self.grasping = False
+            self.grasp_command = {'grasp': False, 'width': self.max_gripper_width}
+            self.gripper_width = self.max_gripper_width
+        else:
+            self.grasping = False
+            self.grasp_command = {'grasp': False, 'width': gripper_width}
+            self.gripper_width = gripper_width
+
+    def get_gripper_width(self):
+        # Returns the current gripper width
+        return self.gripper_width
 
 class GotoJointsLive:
     def __init__(self, dt:float = 0.04, T:int = 1000, k_gains:List[float] = (0.5*np.array(FC.DEFAULT_K_GAINS)).tolist(), 
@@ -318,5 +358,4 @@ class GotoJointsLive:
         self.thread.join()
         print('joined')
         self.fa.stop_skill()
-
         

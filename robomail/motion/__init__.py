@@ -1,1 +1,1 @@
-from .live_controllers import GotoJointsLive, GotoPoseLive
+from .live_controllers import GotoJointsLive, GotoPoseLive, GotoPoseGripperLive, reset_joints
