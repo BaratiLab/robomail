@@ -31,6 +31,7 @@ class GotoPoseLive:
         self.T = T
         self.cartesian_impedances = cartesian_impedances
         self.fa = FrankaArm()
+        
         self.pose = self.fa.get_pose() # pose to send to the skill
         print(type(self.pose), "intialize0")
         self.goal_pose = deepcopy(self.pose) # pose the user provides
@@ -117,7 +118,7 @@ class GotoPoseLive:
     
 
 class GotoPoseGripperLive:
-    def __init__(self, dt = 0.04, T = 1000, cartesian_impedances = None, step_size = 0.05, min_gripper_distance = 0.03925):
+    def __init__(self, dt = 0.04, T = 1000, cartesian_impedances = None, step_size = 0.05, min_gripper_distance = 0.03875):
         """
         NOTE: This code has not been commented or riggerously tested yet. It works (I think), but be careful when using it!
         dt: the time inbetween each communication loop
@@ -130,6 +131,7 @@ class GotoPoseGripperLive:
         self.T = T
         self.cartesian_impedances = cartesian_impedances
         self.fa = FrankaArm()
+        self.FC = FC
         self.pose = self.fa.get_pose() # pose to send to the skill
         self.goal_pose = deepcopy(self.pose) # pose the user provides
         self.running = False # flag used to stop the loop
@@ -160,7 +162,7 @@ class GotoPoseGripperLive:
                 
             if self.new_gripper_command:
                 print("gripper command", self.grasp_command['width'], self.grasp_command['grasp'])
-                self.fa.goto_gripper(width=self.grasp_command['width'], grasp=self.grasp_command['grasp'], block=False)
+                self.fa.goto_gripper(width=self.grasp_command['width'], grasp=self.grasp_command['grasp'], block=False, speed = 0.2)
                 self.new_gripper_command = False
 
             if initialize: # start the skill
@@ -224,6 +226,9 @@ class GotoPoseGripperLive:
 
     def set_gripper_width(self, gripper_width:float):
         # sets the gripper pose. This is used to control the robot.
+        if gripper_width == self.gripper_width:
+            return
+        
         self.new_gripper_command = True
 
         if gripper_width < self.min_gripper_distance:
