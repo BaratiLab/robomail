@@ -1,7 +1,7 @@
 import o3d
 import numpy as np
 import pyrealsense2 as rs
-from cam_utils import *
+from cam_utils import get_cam_info
 
 class CameraClass():
     def __init__(self, cam_number, W=848, H=480):
