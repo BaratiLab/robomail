@@ -1,13 +1,17 @@
 import o3d
 import copy
 import numpy as np
+from cam_utils import *
 from skimage.color import rgb2lab
 from matplotlib import pyplot as plt
 from shapely.geometry import Point, Polygon
 
 class Vision3D():
     def __init__(self):
-        pass
+        # save a dictionary of the camera transforms (should be from each static camera to world frame)
+        self.camera_transforms = {}
+        for i in range(2,6):
+            _, self.camera_transforms[i], _ = get_cam_info(i)
 
     def fuse_point_clouds(self, pc2=None, pc3=None, pc4=None, pc5=None):
         if pc2 != None:
@@ -110,27 +114,34 @@ class Vision3D():
         """
         Updated fusal based on Charlotte's improvements
         """    
-        # import the transforms
-        transform_23 = np.load('live_registration/RANSAC/best/transform_cam2_to_cam3_wonderful.npy')
-        transform_34 = np.load('live_registration/RANSAC/best/transform_cam3_to_cam4_perfect.npy')
-        transform_54 = np.load('live_registration/RANSAC/best/transform_cam5_to_cam4_perfect.npy')
-        transform_4w = np.load('Calibration_Data/Horizontal_Board/cam4_world_transform.npy')
-        transform_w_improvement = np.load('Calibration_Data/Clay_Adjustments/world_transform.npy')
+        # # import the transforms
+        # transform_23 = np.load('live_registration/RANSAC/best/transform_cam2_to_cam3_wonderful.npy')
+        # transform_34 = np.load('live_registration/RANSAC/best/transform_cam3_to_cam4_perfect.npy')
+        # transform_54 = np.load('live_registration/RANSAC/best/transform_cam5_to_cam4_perfect.npy')
+        # transform_4w = np.load('Calibration_Data/Horizontal_Board/cam4_world_transform.npy')
+        # transform_w_improvement = np.load('Calibration_Data/Clay_Adjustments/world_transform.npy')
 
-        # transform and combine all clouds
-        pc2.transform(transform_23)
-        pc2.transform(transform_34)
-        pc2.transform(transform_4w)
-        pc2.transform(transform_w_improvement)
-        pc3.transform(transform_34)
-        pc3.transform(transform_4w)
-        pc3.transform(transform_w_improvement)
-        pc4.transform(transform_4w)
-        pc4.transform(transform_w_improvement)
-        pc5.transform(transform_54)
-        pc5.transform(transform_4w)
-        pc5.transform(transform_w_improvement)
+        # # transform and combine all clouds
+        # pc2.transform(transform_23)
+        # pc2.transform(transform_34)
+        # pc2.transform(transform_4w)
+        # pc2.transform(transform_w_improvement)
+        # pc3.transform(transform_34)
+        # pc3.transform(transform_4w)
+        # pc3.transform(transform_w_improvement)
+        # pc4.transform(transform_4w)
+        # pc4.transform(transform_w_improvement)
+        # pc5.transform(transform_54)
+        # pc5.transform(transform_4w)
+        # pc5.transform(transform_w_improvement)
 
+        # transform the clouds
+        pc2.transform(self.camera_transforms[2])
+        pc3.transform(self.camera_transforms[3])
+        pc4.transform(self.camera_transforms[4])
+        pc5.transform(self.camera_transforms[5])
+
+        # combine the clouds
         pointcloud = o3d.geometry.PointCloud()
         pointcloud.points = pc5.points
         pointcloud.colors = pc5.colors
