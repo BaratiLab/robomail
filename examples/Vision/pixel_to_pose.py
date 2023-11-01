@@ -7,8 +7,8 @@ import robomail.vision as vis
 fa = FrankaArm()
 
 # initialize camera
-W = 848
-H = 480
+W = 848 # 1280
+H = 480 # 720
 cam_serial = '151322061880'
 
 # Configure depth and color streams
