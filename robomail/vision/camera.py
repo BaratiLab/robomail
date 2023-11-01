@@ -20,6 +20,7 @@ class CameraClass():
         # initialize the camera pipeline
         self.pipeline = rs.pipeline()
         config = rs.config()
+        print("\nCamera Serial: ", self.cam_serial)
         config.enable_device(self.cam_serial)
         config.enable_stream(rs.stream.depth, W, H, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
