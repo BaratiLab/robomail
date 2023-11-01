@@ -21,7 +21,7 @@ config_1.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
 
 # ----- Camera 2 (static) -----
 REALSENSE_INTRINSICS_CAM_2 = "calib/realsense_intrinsics_camera2.intr"
-REALSENSE_TF_CAM_2 = "calib/realsense_camera2.tf"
+REALSENSE_TF_CAM_2 = "calib/realsense_camera23.tf"
 # NOTE: can only see the last 12 corners for calibration
 pipeline_2 = rs.pipeline()
 config_2 = rs.config()
@@ -30,8 +30,8 @@ config_2.enable_stream(rs.stream.depth, W, H, rs.format.z16, 30)
 config_2.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
 
 # ----- Camera 3 (static) -----
-REALSENSE_INTRINSICS_CAM_3 = "calib/realsense_intrinsics_camera2.intr"
-REALSENSE_TF_CAM_3 = "calib/realsense_camera2.tf"
+REALSENSE_INTRINSICS_CAM_3 = "calib/realsense_intrinsics_camera3.intr"
+REALSENSE_TF_CAM_3 = "calib/realsense_camera34.tf"
 # NOTE: can only see the last 16 corners for calibration
 pipeline_3 = rs.pipeline()
 config_3 = rs.config()
@@ -40,8 +40,8 @@ config_3.enable_stream(rs.stream.depth, W, H, rs.format.z16, 30)
 config_3.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
 
 # ----- Camera 4 (static) -----
-REALSENSE_INTRINSICS_CAM_4 = "calib/realsense_intrinsics_camera2.intr"
-REALSENSE_TF_CAM_4 = "calib/realsense_camera2.tf"
+REALSENSE_INTRINSICS_CAM_4 = "calib/realsense_intrinsics_camera4.intr"
+REALSENSE_TF_CAM_4 = "calib/realsense_camera4w.tf"
 # NOTE: can see all 26 corners for calibration
 pipeline_4 = rs.pipeline()
 config_4 = rs.config()
@@ -50,8 +50,8 @@ config_4.enable_stream(rs.stream.depth, W, H, rs.format.z16, 30)
 config_4.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
 
 # ----- Camera 5 (static) -----
-REALSENSE_INTRINSICS_CAM_5 = "calib/realsense_intrinsics_camera2.intr"
-REALSENSE_TF_CAM_5 = "calib/realsense_camera2.tf"
+REALSENSE_INTRINSICS_CAM_5 = "calib/realsense_intrinsics_camera5.intr"
+REALSENSE_TF_CAM_5 = "calib/realsense_camera54.tf"
 # NOTE: can only see the last 9 corners for calibration
 pipeline_5 = rs.pipeline()
 config_5 = rs.config()

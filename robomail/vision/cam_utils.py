@@ -36,7 +36,7 @@ def get_cam_info(cam_number, alternate_path=None):
 
     # dictionary of camera extrinsics
     camera_extrinsics = {
-        1: path + "/realsense_ee_shifted.tf",
+        1: path + "/realsense_ee.tf",
         2: path + "/realsense_camera23.tf",
         3: path + "/realsense_camera34.tf",
         4: path + "/realsense_camera4w.tf",

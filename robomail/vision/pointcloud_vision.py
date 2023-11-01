@@ -1,7 +1,7 @@
 import open3d as o3d
 import copy
 import numpy as np
-from cam_utils import get_cam_info
+from .cam_utils import get_cam_info
 from skimage.color import rgb2lab
 from matplotlib import pyplot as plt
 from shapely.geometry import Point, Polygon
