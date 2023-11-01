@@ -1,4 +1,4 @@
-import o3d
+import open3d as o3d
 import copy
 import numpy as np
 from cam_utils import get_cam_info
@@ -12,16 +12,6 @@ class Vision3D():
         self.camera_transforms = {}
         for i in range(2,6):
             _, self.camera_transforms[i], _ = get_cam_info(i)
-
-    def fuse_point_clouds(self, pc2=None, pc3=None, pc4=None, pc5=None):
-        if pc2 != None:
-            pass
-        if pc3 != None:
-            pass
-        if pc4 != None:
-            pass
-        if pc5 != None:
-            pass
 
     def plot_target_and_state_clouds(self, state, target):
         """

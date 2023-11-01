@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from autolab_core import Point
-from cam_utils import get_cam_info
+from .cam_utils import get_cam_info
 
 class GetObjectCenterPointInWorld():
     def __init__(self, ee_cam):
