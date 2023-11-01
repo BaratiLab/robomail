@@ -23,6 +23,7 @@ def get_cam_info(cam_number, alternate_path=None):
     if alternate_path:
         path = alternate_path
     else:
+        # TODO: get the path to be robust to getting called from any path
         path = "calib"
 
     # dictionary of camera intrinsics

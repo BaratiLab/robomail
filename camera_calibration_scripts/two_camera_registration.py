@@ -45,6 +45,9 @@ camb = 3
 camera_a = vis.CameraClass(cama)
 camera_b = vis.CameraClass(camb)
 
+# initialize the 3D vision code
+pcl_vis = vis.Vision3D()
+
 # get the point clouds
 _, _, pca, _ = camera_a._get_next_frame()
 _, _, pcb, _ = camera_b._get_next_frame()
@@ -59,8 +62,8 @@ pcdb.points = pcb.points
 pcdb.colors = pcb.colors
 
 # remove the background
-pcda = remove_background(pcda, radius=0.9)
-pcdb = remove_background(pcdb, radius=0.9)
+pcda = pcl_vis.remove_background(pcda, radius=0.9)
+pcdb = pcl_vis.remove_background(pcdb, radius=0.9)
 
 # collect addition point clouds to combine
 for i in range(9):
@@ -77,8 +80,8 @@ pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
 # remove the background
-pcda = remove_background(pcda, radius=1.65) # 0.9
-pcdb = remove_background(pcdb, radius=1.65) # 0.9
+pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
+pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
 
 # RANSAC registration
 voxel_size = 0.01 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
