@@ -21,8 +21,8 @@ class CameraClass():
         self.pipeline = rs.pipeline()
         config = rs.config()
         config.enable_device(self.cam_serial)
-        config.enable_stream(rs.stream.depth, W, H, rs.format.z16, 30)
-        config.enable_stream(rs.stream.color, W, H, rs.format.bgr8, 30)
+        config.enable_stream(rs.stream.depth, self.W, self.H, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, self.W, self.H, rs.format.bgr8, 30)
 
         print("[INFO] start streaming...")
         self.pipeline.start(config)
@@ -58,7 +58,7 @@ class CameraClass():
         verts = np.asanyarray(points.get_vertices()).view(np.float32).reshape(-1, self.W, 3)  # xyz
 
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(color_image), o3d.geometry.Image(depth_image), convert_rgb_to_intensity=False)
-        pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(width=W, height=H, fx=intrinsics.fx, fy=intrinsics.fy, cx=intrinsics.ppx, cy=intrinsics.ppy)
+        pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(width=self.W, height=self.H, fx=intrinsics.fx, fy=intrinsics.fy, cx=intrinsics.ppx, cy=intrinsics.ppy)
         pc = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, pinhole_camera_intrinsic)
 
         # skip empty frames
