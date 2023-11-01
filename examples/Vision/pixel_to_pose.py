@@ -10,6 +10,7 @@ fa = FrankaArm()
 W = 848 # 1280
 H = 480 # 720
 cam_serial = '151322061880'
+cam_number = 4
 
 # Configure depth and color streams
 pipeline = rs.pipeline()
@@ -25,7 +26,7 @@ aligned_stream = rs.align(rs.stream.color) # alignment between color and depth
 point_cloud = rs.pointcloud()
 
 # get the camera intrinsics for that camera
-cam = vis.GetPixelPose(cam_serial)
+cam = vis.GetPixelPose(cam_number)
 realsense_intrinsics, realsense_to_ee_transform = cam.get_intrinsics_extrinsics()
 
 while True:

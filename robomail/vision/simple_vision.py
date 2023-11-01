@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 from autolab_core import RigidTransform, Point
 from perception import CameraIntrinsics
+from cam_utils import *
 
 class GetObjectCenterPointInWorld():
     def __init__(self, ee_cam):
@@ -21,51 +22,12 @@ class GetObjectCenterPointInWorld():
         return object_center_point_in_world
 
 class GetPixelPose():
-    def __init__(self, cam_serial):
-        self.cam_serial = cam_serial
-
-        # dictionary of camera serials
-        camera_serials = {
-            '220222066259': 1,
-            '151322066099': 2,
-            '151322069488': 3,
-            '151322061880': 4,
-            '151322066932': 5,
-        }
-
-        # dictionary of camera intrinsics
-        camera_intrinsics = {
-            1: "calib/realsense_intrinsics.intr",
-            2: "calib/realsense_intrinsics_camera2.intr",
-            3: "calib/realsense_intrinsics_camera2.intr",
-            4: "calib/realsense_intrinsics_camera4.intr",
-            5: "calib/realsense_intrinsics_camera5.intr"
-        }
-
-        # dictionary of camera extrinsics
-        camera_extrinsics = {
-            1: "calib/realsense_ee_shifted.tf",
-            2: "calib/realsense_camera2.tf",
-            3: "calib/realsense_camera3.tf",
-            4: "calib/realsense_camera4.tf",
-            5: "calib/realsense_camera5.tf"
-        }
-
-        # import camera intrinsics and extrinsics
-        REALSENSE_INTRINSICS = camera_intrinsics[camera_serials[self.cam_serial]]
-        REALSENSE_EE_TF = camera_extrinsics[camera_serials[self.cam_serial]]
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_EE_TF)
-        args = parser.parse_args()
-
-        self.realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
-        self.realsense_to_ee_transform = RigidTransform.load(args.extrinsics_file_path)
+    def __init__(self, cam_number):
+        self.cam_number = cam_number
+        self.realsense_intrinsics, self.realsense_extrinsics, self.cam_serial = get_cam_info(cam_number)
 
         # initialize the base class to calculate the pose
-        if camera_serials[self.cam_serial] == 1:
+        if self.cam_number == 1:
             self.ee_cam = True
         else: 
             self.ee_cam = False
@@ -81,56 +43,17 @@ class GetPixelPose():
         y = obj_points[:,1] 
         z = obj_points[:,2]
 
-        com = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(np.array([x,y,z]), self.realsense_to_ee_transform, current_pose)
+        com = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(np.array([x,y,z]), self.realsense_extrinsics, current_pose)
         com = np.array([com[0], com[1], com[2]])
         return com
 
 class GetPatchPose():
-    def __init__(self, cam_serial):
-        self.cam_serial = cam_serial
-
-        # dictionary of camera serials
-        camera_serials = {
-            '220222066259': 1,
-            '151322066099': 2,
-            '151322069488': 3,
-            '151322061880': 4,
-            '151322066932': 5,
-        }
-
-        # dictionary of camera intrinsics
-        camera_intrinsics = {
-            1: "calib/realsense_intrinsics.intr",
-            2: "calib/realsense_intrinsics_camera2.intr",
-            3: "calib/realsense_intrinsics_camera2.intr",
-            4: "calib/realsense_intrinsics_camera4.intr",
-            5: "calib/realsense_intrinsics_camera5.intr"
-        }
-
-        # dictionary of camera extrinsics
-        camera_extrinsics = {
-            1: "calib/realsense_ee_shifted.tf",
-            2: "calib/realsense_camera2.tf",
-            3: "calib/realsense_camera3.tf",
-            4: "calib/realsense_camera4.tf",
-            5: "calib/realsense_camera5.tf"
-        }
-
-        # import camera intrinsics and extrinsics
-        REALSENSE_INTRINSICS = camera_intrinsics[camera_serials[self.cam_serial]]
-        REALSENSE_EE_TF = camera_extrinsics[camera_serials[self.cam_serial]]
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_EE_TF)
-        args = parser.parse_args()
-
-        self.realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
-        self.realsense_to_ee_transform = RigidTransform.load(args.extrinsics_file_path)
+    def __init__(self, cam_number):
+        self.cam_number = cam_number
+        self.realsense_intrinsics, self.realsense_extrinsics, self.cam_serial = get_cam_info(cam_number)
 
         # initialize the base class to calculate the pose
-        if camera_serials[self.cam_serial] == 1:
+        if self.cam_number == 1:
             self.ee_cam = True
         else: 
             self.ee_cam = False
@@ -160,11 +83,11 @@ class GetPatchPose():
         
         median_point = np.array([x_pos, y_pos, z_pos])
         
-        object_median_point = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(median_point, self.realsense_to_ee_transform, current_pose)
+        object_median_point = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(median_point, self.realsense_extrinsics, current_pose)
         com_depth = np.array([object_median_point[0], object_median_point[1], object_median_point[2]])
         
         # ---- Image-Based Prediction (No Depth) ----
-        com_nodepth = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(tag_translation, self.realsense_to_ee_transform, current_pose)
+        com_nodepth = self.pose_func.get_object_center_point_in_world_realsense_3D_camera_point(tag_translation, self.realsense_extrinsics, current_pose)
         com_nodepth = np.array([com_nodepth[0], com_nodepth[1], com_nodepth[2]])
         
         # ---- Combine Predictions ----
@@ -181,4 +104,4 @@ class GetPatchPose():
         return object_center_point
     
     def get_intrinsics_extrinsics(self):
-        return self.realsense_intrinsics, self.realsense_to_ee_transform
+        return self.realsense_intrinsics, self.realsense_extrinsics
