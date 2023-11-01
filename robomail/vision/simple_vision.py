@@ -1,7 +1,6 @@
 import argparse
 import numpy as np
-from autolab_core import RigidTransform, Point
-from perception import CameraIntrinsics
+from autolab_core import Point
 from cam_utils import *
 
 class GetObjectCenterPointInWorld():

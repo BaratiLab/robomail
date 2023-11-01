@@ -45,8 +45,7 @@ def get_cam_info(cam_number, alternate_path=None):
 
     # import camera intrinsics and extrinsics
     REALSENSE_INTRINSICS = camera_intrinsics[cam_number]
-    realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
-
+    
     # combine camera extrinsics to get the camera to world transform (transform order ABC --> multiply transforms CBA)
     if cam_number == 1 or cam_number == 4:
         # only import 1 or 4
@@ -58,6 +57,7 @@ def get_cam_info(cam_number, alternate_path=None):
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF)
         args = parser.parse_args()
         realsense_extrinsics = RigidTransform.load(args.extrinsics_file_path)
+        realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
     elif cam_number == 2:
         # import 23 / 34/ 4w
@@ -69,21 +69,16 @@ def get_cam_info(cam_number, alternate_path=None):
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_2)
         args = parser.parse_args()
         realsense_23 = RigidTransform.load(args.extrinsics_file_path)
+        realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
         REALSENSE_TF_3 = camera_extrinsics[3]
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
         args = parser.parse_args()
         realsense_34 = RigidTransform.load(args.extrinsics_file_path)
 
         REALSENSE_TF_4 = camera_extrinsics[4]
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
         args = parser.parse_args()
         realsense_4w = RigidTransform.load(args.extrinsics_file_path)
@@ -100,12 +95,10 @@ def get_cam_info(cam_number, alternate_path=None):
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
         args = parser.parse_args()
         realsense_34 = RigidTransform.load(args.extrinsics_file_path)
+        realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
         REALSENSE_TF_4 = camera_extrinsics[4]
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
         args = parser.parse_args()
         realsense_4w = RigidTransform.load(args.extrinsics_file_path)
@@ -122,12 +115,10 @@ def get_cam_info(cam_number, alternate_path=None):
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_5)
         args = parser.parse_args()
         realsense_54 = RigidTransform.load(args.extrinsics_file_path)
+        realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
         REALSENSE_TF_4 = camera_extrinsics[4]
         parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
-        )
         parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
         args = parser.parse_args()
         realsense_4w = RigidTransform.load(args.extrinsics_file_path)
