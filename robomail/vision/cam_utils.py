@@ -3,7 +3,7 @@ import argparse
 from autolab_core import RigidTransform
 from perception import CameraIntrinsics
 
-def get_cam_info(cam_number):
+def get_cam_info(cam_number, alternate_path=None):
         # dictionary of camera serials
         camera_serials = {
             1: '220222066259',
@@ -13,22 +13,27 @@ def get_cam_info(cam_number):
             5: '151322066932',
         }
 
+        if alternate_path:
+            path = alternate_path
+        else:
+            path = "calib"
+
         # dictionary of camera intrinsics
         camera_intrinsics = {
-            1: "calib/realsense_intrinsics.intr",
-            2: "calib/realsense_intrinsics_camera2.intr",
-            3: "calib/realsense_intrinsics_camera2.intr",
-            4: "calib/realsense_intrinsics_camera4.intr",
-            5: "calib/realsense_intrinsics_camera5.intr"
+            1: path + "/realsense_intrinsics.intr",
+            2: path + "/realsense_intrinsics_camera2.intr",
+            3: path + "/realsense_intrinsics_camera2.intr",
+            4: path + "/realsense_intrinsics_camera4.intr",
+            5: path + "/realsense_intrinsics_camera5.intr"
         }
 
         # dictionary of camera extrinsics
         camera_extrinsics = {
-            1: "calib/realsense_ee_shifted.tf",
-            2: "calib/realsense_camera2.tf",
-            3: "calib/realsense_camera3.tf",
-            4: "calib/realsense_camera4.tf",
-            5: "calib/realsense_camera5.tf"
+            1: path + "/realsense_ee_shifted.tf",
+            2: path + "/realsense_camera2.tf",
+            3: path + "/realsense_camera3.tf",
+            4: path + "/realsense_camera4.tf",
+            5: path + "/realsense_camera5.tf"
         }
 
         # import camera intrinsics and extrinsics
