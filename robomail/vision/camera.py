@@ -7,6 +7,11 @@ from perception import CameraIntrinsics
 
 class CameraClass():
     def __init__(self, cam_number, W=848, H=480):
+        """
+        Camera class to handle tracking of camera serials, intrinsics, extrinsics and the initialization
+        pipeline under the hood. Simply inpyt the associated camera number and optionally the image
+        dimensions to initialize the camera.
+        """
         # camera number [1 is end-effector, 2-5 are static]
         self.cam_number = cam_number
 
@@ -65,7 +70,6 @@ class CameraClass():
 
         self.aligned_stream = rs.align(rs.stream.color) # alignment between color and depth
         self.point_cloud = rs.pointcloud()
-
 
     def _get_cam_intrinsics(self):
         return self.realsense_intrinsics
