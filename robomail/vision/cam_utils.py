@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 from autolab_core import RigidTransform
 from perception import CameraIntrinsics
+import os
 
 def get_cam_info(cam_number, alternate_path=None):
     """
@@ -11,6 +12,8 @@ def get_cam_info(cam_number, alternate_path=None):
     respect to each other during calibration, and need to be combined to get the global transform
     from the respective static camera to the world frame. This function should handle that automatically.
     """
+    module_path = os.path.dirname(__file__)
+
     # dictionary of camera serials
     camera_serials = {
         1: '220222066259',
@@ -23,7 +26,7 @@ def get_cam_info(cam_number, alternate_path=None):
     if alternate_path:
         path = alternate_path
     else:
-        path = "calib"
+        path = module_path + "/calib"
 
     # dictionary of camera intrinsics
     camera_intrinsics = {
