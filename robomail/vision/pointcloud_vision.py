@@ -11,7 +11,9 @@ class Vision3D():
         # save a dictionary of the camera transforms (should be from each static camera to world frame)
         self.camera_transforms = {}
         for i in range(2,6):
-            _, self.camera_transforms[i], _ = get_cam_info(i)
+            _, transform, _ = get_cam_info(i)
+            self.camera_transforms[i] = transform# .matrix()
+            # _, self.camera_transforms[i], _ = get_cam_info(i)
 
     def plot_target_and_state_clouds(self, state, target):
         """

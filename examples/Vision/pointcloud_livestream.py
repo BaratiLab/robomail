@@ -10,10 +10,10 @@ cam4 = vis.CameraClass(4)
 cam5 = vis.CameraClass(5)
 
 # get the camera to world transforms
-transform_2w = cam2._get_cam_extrinsics()
-transform_3w = cam3._get_cam_extrinsics()
-transform_4w = cam4._get_cam_extrinsics()
-transform_5w = cam5._get_cam_extrinsics()
+transform_2w = cam2._get_cam_extrinsics()# .matrix()
+transform_3w = cam3._get_cam_extrinsics()# .matrix()
+transform_4w = cam4._get_cam_extrinsics()# .matrix()
+transform_5w = cam5._get_cam_extrinsics()# .matrix()
 
 # initialize the 3D vision code
 pcl_vis = vis.Vision3D()
