@@ -41,6 +41,8 @@ CALIBRATION PARAMETER NOTES:
 cama = 2
 camb = 3
 
+calib = vis.CalibrationClass()
+
 # initialize the cameras
 camera_a = vis.CameraClass(cama)
 camera_b = vis.CameraClass(camb)
@@ -85,11 +87,11 @@ pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
 # RANSAC registration
 voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
-source, target, source_down, target_down, source_fpfh, target_fpfh = prepare_dataset(voxel_size, pcda, pcdb)
-result_ransac = execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
+result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
 # ICP finetuning
-result_icp = refine_registration(source, target, voxel_size, result_ransac.transformation)
+result_icp = calib.refine_registration(source, target, voxel_size, result_ransac.transformation)
 cama_to_camb = result_icp.transformation
 pcda.transform(cama_to_camb)
 o3d.visualization.draw_geometries([pcda, pcdb])
