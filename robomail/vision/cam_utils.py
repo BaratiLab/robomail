@@ -92,8 +92,9 @@ def get_cam_info(cam_number, alternate_path=None):
         args = parser.parse_args()
         realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
         
-        realsense_extrinsics = realsense_4w @ realsense_34 @ realsense_23
-
+        realsense_extrinsics = realsense_4w @ realsense_34 @ realsense_23 # og
+        # realsense_extrinsics = realsense_23 @ realsense_34 @ realsense_4w
+        # realsense_extrinsics = realsense_23
          
     elif cam_number == 3:
         # import 34/ 4w
@@ -113,7 +114,9 @@ def get_cam_info(cam_number, alternate_path=None):
         args = parser.parse_args()
         realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
         
-        realsense_extrinsics = realsense_4w @ realsense_34 
+        realsense_extrinsics = realsense_4w @ realsense_34 # og
+        # realsense_extrinsics = realsense_34 @ realsense_4w
+        # realsense_extrinsics = realsense_34
 
     else:
         # import 54/ 4w
@@ -133,7 +136,9 @@ def get_cam_info(cam_number, alternate_path=None):
         args = parser.parse_args()
         realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
         
-        realsense_extrinsics = realsense_4w @ realsense_54 
+        realsense_extrinsics = realsense_4w @ realsense_54 # og
+        # realsense_extrinsics = realsense_54 @ realsense_4w 
+        # realsense_extrinsics = realsense_54
 
     # get the camera serial number
     cam_serial = camera_serials[cam_number]

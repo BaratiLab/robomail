@@ -10,6 +10,10 @@ cam4 = vis.CameraClass(4)
 cam5 = vis.CameraClass(5)
 
 # get the camera to world transforms
+# transform_23 = cam2._get_cam_extrinsics()# .matrix()
+# transform_34 = cam3._get_cam_extrinsics()# .matrix()
+# transform_4w = cam4._get_cam_extrinsics()# .matrix()
+# transform_54 = cam5._get_cam_extrinsics()# .matrix()
 transform_2w = cam2._get_cam_extrinsics()# .matrix()
 transform_3w = cam3._get_cam_extrinsics()# .matrix()
 transform_4w = cam4._get_cam_extrinsics()# .matrix()
@@ -32,6 +36,14 @@ pc2.transform(transform_2w)
 pc3.transform(transform_3w)
 pc4.transform(transform_4w)
 pc5.transform(transform_5w)
+# pc2.transform(transform_23)
+# pc2.transform(transform_34)
+# pc2.transform(transform_4w)
+# pc3.transform(transform_34)
+# pc3.transform(transform_4w)
+# pc4.transform(transform_4w)
+# pc5.transform(transform_54)
+# pc5.transform(transform_4w)
 
 # combine into single pointcloud
 pointcloud = o3d.geometry.PointCloud()
@@ -44,11 +56,18 @@ pointcloud.colors.extend(pc4.colors)
 pointcloud.points.extend(pc5.points)
 pointcloud.colors.extend(pc5.colors)
 
-pointcloud = pcl_vis.remove_background(pointcloud, radius=1.15) 
+# pointcloud = pcl_vis.remove_background(pointcloud, radius=1.15) 
+
+o3d.visualization.draw_geometries([pointcloud])
+
+assert False
 
 vis.add_geometry(pointcloud)
 vis.poll_events()
 vis.update_renderer()
+
+time.sleep(1000)
+assert False
 
 while True:
     _, _, pc2, _ = cam2._get_next_frame()
