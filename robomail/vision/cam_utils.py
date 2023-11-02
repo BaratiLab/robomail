@@ -163,7 +163,7 @@ def get_cam_info(cam_number, alternate_path=None):
         # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
         # args = parser.parse_args()
         # realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
-        realsense_extrinsics = np.load(camera_extrinsics[4])
+        realsense_4w = np.load(camera_extrinsics[4])
         
         realsense_extrinsics = realsense_4w @ realsense_54 # og
         # realsense_extrinsics = realsense_54 @ realsense_4w 
