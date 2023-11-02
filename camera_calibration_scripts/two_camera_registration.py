@@ -38,8 +38,8 @@ CALIBRATION PARAMETER NOTES:
     - ensure calibration object facing both cameras with the same face as much as possible
 """
 
-cama = 2
-camb = 3
+cama = 5
+camb = 4
 
 calib = vis.CalibrationClass()
 
@@ -63,9 +63,9 @@ pcdb = o3d.geometry.PointCloud()
 pcdb.points = pcb.points
 pcdb.colors = pcb.colors
 
-# # remove the background
-# pcda = pcl_vis.remove_background(pcda, radius=0.9)
-# pcdb = pcl_vis.remove_background(pcdb, radius=0.9)
+# remove the background
+pcda = pcl_vis.remove_background(pcda, radius=1.65)
+pcdb = pcl_vis.remove_background(pcdb, radius=1.65)
 
 # collect addition point clouds to combine
 for i in range(9):
@@ -81,12 +81,12 @@ for i in range(9):
 pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
-# # remove the background
-# pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
-# pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
+# remove the background
+pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
+pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
 
 # RANSAC registration
-voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
+voxel_size = 0.008 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
 source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
 result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
