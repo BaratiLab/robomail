@@ -61,9 +61,9 @@ pcdb = o3d.geometry.PointCloud()
 pcdb.points = pcb.points
 pcdb.colors = pcb.colors
 
-# remove the background
-pcda = pcl_vis.remove_background(pcda, radius=0.9)
-pcdb = pcl_vis.remove_background(pcdb, radius=0.9)
+# # remove the background
+# pcda = pcl_vis.remove_background(pcda, radius=0.9)
+# pcdb = pcl_vis.remove_background(pcdb, radius=0.9)
 
 # collect addition point clouds to combine
 for i in range(9):
@@ -79,12 +79,12 @@ for i in range(9):
 pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
-# remove the background
-pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
-pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
+# # remove the background
+# pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
+# pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
 
 # RANSAC registration
-voxel_size = 0.01 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
+voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
 source, target, source_down, target_down, source_fpfh, target_fpfh = prepare_dataset(voxel_size, pcda, pcdb)
 result_ransac = execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
@@ -94,4 +94,4 @@ cama_to_camb = result_icp.transformation
 pcda.transform(cama_to_camb)
 o3d.visualization.draw_geometries([pcda, pcdb])
 
-np.save("live_registration/RANSAC/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
+np.save("live_registration/2Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
