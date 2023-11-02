@@ -43,21 +43,30 @@ def get_cam_info(cam_number, alternate_path=None):
         5: path + "/realsense_intrinsics_camera5.intr"
     }
 
+    # # dictionary of camera extrinsics
+    # camera_extrinsics = {
+    #     1: path + "/realsense_ee.tf",
+    #     2: path + "/realsense_camera23.tf",
+    #     3: path + "/realsense_camera34.tf",
+    #     4: path + "/realsense_camera4w.tf",
+    #     5: path + "/realsense_camera54.tf"
+    # }
+
     # dictionary of camera extrinsics
     camera_extrinsics = {
         1: path + "/realsense_ee.tf",
-        2: path + "/realsense_camera23.tf",
-        3: path + "/realsense_camera34.tf",
-        4: path + "/realsense_camera4w.tf",
-        5: path + "/realsense_camera54.tf"
+        2: path + "/realsense_camera23.npy",
+        3: path + "/realsense_camera34.npy",
+        4: path + "/realsense_camera4w.npy",
+        5: path + "/realsense_camera54.npy"
     }
 
     # import camera intrinsics and extrinsics
     REALSENSE_INTRINSICS = camera_intrinsics[cam_number]
     
     # combine camera extrinsics to get the camera to world transform (transform order ABC --> multiply transforms CBA)
-    if cam_number == 1 or cam_number == 4:
-        # only import 1 or 4
+    if cam_number == 1:
+        # only import 1 
         REALSENSE_TF = camera_extrinsics[cam_number]
         parser = argparse.ArgumentParser()
         parser.add_argument(
@@ -68,29 +77,45 @@ def get_cam_info(cam_number, alternate_path=None):
         realsense_extrinsics = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))#.matrix()
         realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
-    elif cam_number == 2:
-        # import 23 / 34/ 4w
-        REALSENSE_TF_2 = camera_extrinsics[cam_number]
+    elif cam_number == 4:
+        # only import 4
+        # REALSENSE_TF = camera_extrinsics[cam_number]
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
         )
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_2)
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF)
         args = parser.parse_args()
-        realsense_23 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # realsense_extrinsics = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))#.matrix()
+        realsense_extrinsics = np.load(camera_extrinsics[cam_number])
         realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
-        REALSENSE_TF_3 = camera_extrinsics[3]
+    elif cam_number == 2:
+        # import 23 / 34/ 4w
+        # REALSENSE_TF_2 = camera_extrinsics[cam_number]
         parser = argparse.ArgumentParser()
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
+        parser.add_argument(
+            "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
+        )
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_2)
         args = parser.parse_args()
-        realsense_34 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # realsense_23 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_23 = np.load(camera_extrinsics[cam_number])
+        realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
-        REALSENSE_TF_4 = camera_extrinsics[4]
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
-        args = parser.parse_args()
-        realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # REALSENSE_TF_3 = camera_extrinsics[3]
+        # parser = argparse.ArgumentParser()
+        # # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
+        # args = parser.parse_args()
+        # # realsense_34 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_34 = np.load(camera_extrinsics[3])
+
+        # REALSENSE_TF_4 = camera_extrinsics[4]
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
+        # args = parser.parse_args()
+        # realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_4w = np.load(camera_extrinsics[4])
         
         realsense_extrinsics = realsense_4w @ realsense_34 @ realsense_23 # og
         # realsense_extrinsics = realsense_23 @ realsense_34 @ realsense_4w
@@ -98,21 +123,23 @@ def get_cam_info(cam_number, alternate_path=None):
          
     elif cam_number == 3:
         # import 34/ 4w
-        REALSENSE_TF_3 = camera_extrinsics[cam_number]
+        # REALSENSE_TF_3 = camera_extrinsics[cam_number]
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
         )
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_3)
         args = parser.parse_args()
-        realsense_34 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # realsense_34 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_34 = np.load(camera_extrinsics[cam_number])
         realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
-        REALSENSE_TF_4 = camera_extrinsics[4]
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
-        args = parser.parse_args()
-        realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # REALSENSE_TF_4 = camera_extrinsics[4]
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
+        # args = parser.parse_args()
+        # realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_4w = np.load(camera_extrinsics[4])
         
         realsense_extrinsics = realsense_4w @ realsense_34 # og
         # realsense_extrinsics = realsense_34 @ realsense_4w
@@ -120,21 +147,23 @@ def get_cam_info(cam_number, alternate_path=None):
 
     else:
         # import 54/ 4w
-        REALSENSE_TF_5 = camera_extrinsics[cam_number]
+        # REALSENSE_TF_5 = camera_extrinsics[cam_number]
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "--intrinsics_file_path", type=str, default=REALSENSE_INTRINSICS
         )
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_5)
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_5)
         args = parser.parse_args()
-        realsense_54 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # realsense_54 = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_54 = np.load(camera_extrinsics[cam_number])
         realsense_intrinsics = CameraIntrinsics.load(args.intrinsics_file_path)
 
-        REALSENSE_TF_4 = camera_extrinsics[4]
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
-        args = parser.parse_args()
-        realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        # REALSENSE_TF_4 = camera_extrinsics[4]
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument("--extrinsics_file_path", type=str, default=REALSENSE_TF_4)
+        # args = parser.parse_args()
+        # realsense_4w = rigid_transform_to_numpy(RigidTransform.load(args.extrinsics_file_path))
+        realsense_extrinsics = np.load(camera_extrinsics[4])
         
         realsense_extrinsics = realsense_4w @ realsense_54 # og
         # realsense_extrinsics = realsense_54 @ realsense_4w 
