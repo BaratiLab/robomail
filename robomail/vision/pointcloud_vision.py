@@ -106,27 +106,6 @@ class Vision3D():
         """
         Updated fusal based on Charlotte's improvements
         """    
-        # # import the transforms
-        # transform_23 = np.load('live_registration/RANSAC/best/transform_cam2_to_cam3_wonderful.npy')
-        # transform_34 = np.load('live_registration/RANSAC/best/transform_cam3_to_cam4_perfect.npy')
-        # transform_54 = np.load('live_registration/RANSAC/best/transform_cam5_to_cam4_perfect.npy')
-        # transform_4w = np.load('Calibration_Data/Horizontal_Board/cam4_world_transform.npy')
-        # transform_w_improvement = np.load('Calibration_Data/Clay_Adjustments/world_transform.npy')
-
-        # # transform and combine all clouds
-        # pc2.transform(transform_23)
-        # pc2.transform(transform_34)
-        # pc2.transform(transform_4w)
-        # pc2.transform(transform_w_improvement)
-        # pc3.transform(transform_34)
-        # pc3.transform(transform_4w)
-        # pc3.transform(transform_w_improvement)
-        # pc4.transform(transform_4w)
-        # pc4.transform(transform_w_improvement)
-        # pc5.transform(transform_54)
-        # pc5.transform(transform_4w)
-        # pc5.transform(transform_w_improvement)
-
         # transform the clouds
         pc2.transform(self.camera_transforms[2])
         pc3.transform(self.camera_transforms[3])

@@ -1,0 +1,4 @@
+pyrealsense2
+open3d
+autolab_core
+shapely
