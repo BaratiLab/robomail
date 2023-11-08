@@ -102,7 +102,7 @@ class Vision3D():
         
         return pcd
     
-    def fuse_point_clouds(self, pc2, pc3, pc4, pc5):
+    def fuse_point_clouds(self, pc2, pc3, pc4, pc5, vis=False):
         """
         Updated fusal based on Charlotte's improvements
         """    
@@ -206,5 +206,6 @@ class Vision3D():
         pointcloud = o3d.geometry.PointCloud()
         pointcloud.points = o3d.utility.Vector3dVector(rescaled_points)
         pointcloud.colors = o3d.utility.Vector3dVector(np.tile(np.array([0,0,1]), (len(rescaled_points),1)))
-        # o3d.visualization.draw_geometries([pointcloud])
+        if vis:
+            o3d.visualization.draw_geometries([pointcloud])
         return rescaled_points
