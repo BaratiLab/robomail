@@ -138,8 +138,9 @@ class Vision3D:
     def fuse_point_clouds(self, pc2, pc3, pc4, pc5, vis=False):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
-        Franka workspace into world coordinate frame and performs background
-        and color cropping
+        Franka workspace into world coordinate frame, performs background
+        and color cropping, and scales up by 10 to adjust for size of point clouds
+        in ShapeNet dataset
 
         Args:
         pc2 (o3d.geometry.PointCloud): point cloud from camera 2
@@ -150,7 +151,7 @@ class Vision3D:
 
         Returns:
         rescaled_points (o3d.geometry.PointCloud): stitched and cropped final
-        point cloud scaled up by 10 (shapenet size) TODO
+        point cloud scaled up by 10
         """
         # transform each cloud to world frame
         pc2.transform(self.camera_transforms[2])
