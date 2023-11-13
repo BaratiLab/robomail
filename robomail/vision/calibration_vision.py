@@ -93,8 +93,8 @@ class CalibrationClass:
         Args:
         source_down (o3d.geometry.PointCloud): downsampled source point cloud from prepare_dataset()
         target_down (o3d.geometry.PointCloud): downsampled target point cloud from prepare_dataset()
-        source_fhfh (o3d.registration.Feature): FPFH feature for each point of source point cloud
-        target_fhfh (o3d.registration.Feature): FPFH feature for each point of target point cloud
+        source_fpfh (o3d.registration.Feature): FPFH feature for each point of source point cloud
+        target_fpfh (o3d.registration.Feature): FPFH feature for each point of target point cloud
         voxel_size (float): voxel size used to define distance threshold for alignment
 
         Returns:
