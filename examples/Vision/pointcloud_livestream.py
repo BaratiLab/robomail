@@ -10,10 +10,10 @@ cam4 = vis.CameraClass(4)
 cam5 = vis.CameraClass(5)
 
 # get the camera to world transforms
-transform_2w = cam2._get_cam_extrinsics()# .matrix()
-transform_3w = cam3._get_cam_extrinsics()# .matrix()
-transform_4w = cam4._get_cam_extrinsics()# .matrix()
-transform_5w = cam5._get_cam_extrinsics()# .matrix()
+transform_2w = cam2.get_cam_extrinsics()# .matrix()
+transform_3w = cam3.get_cam_extrinsics()# .matrix()
+transform_4w = cam4.get_cam_extrinsics()# .matrix()
+transform_5w = cam5.get_cam_extrinsics()# .matrix()
 
 # initialize the 3D vision code
 pcl_vis = vis.Vision3D()
@@ -22,10 +22,10 @@ pcl_vis = vis.Vision3D()
 vis = o3d.visualization.Visualizer()
 vis.create_window()
 
-_, _, pc2, _ = cam2._get_next_frame()
-_, _, pc3, _ = cam3._get_next_frame()
-_, _, pc4, _ = cam4._get_next_frame()
-_, _, pc5, _ = cam5._get_next_frame()
+_, _, pc2, _ = cam2.get_next_frame()
+_, _, pc3, _ = cam3.get_next_frame()
+_, _, pc4, _ = cam4.get_next_frame()
+_, _, pc5, _ = cam5.get_next_frame()
 
 # transform cameras
 pc2.transform(transform_2w)
@@ -51,10 +51,10 @@ vis.poll_events()
 vis.update_renderer()
 
 while True:
-    _, _, pc2, _ = cam2._get_next_frame()
-    _, _, pc3, _ = cam3._get_next_frame()
-    _, _, pc4, _ = cam4._get_next_frame()
-    _, _, pc5, _ = cam5._get_next_frame()
+    _, _, pc2, _ = cam2.get_next_frame()
+    _, _, pc3, _ = cam3.get_next_frame()
+    _, _, pc4, _ = cam4.get_next_frame()
+    _, _, pc5, _ = cam5.get_next_frame()
 
     # transform cameras
     pc2.transform(transform_2w)

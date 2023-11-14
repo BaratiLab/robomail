@@ -10,14 +10,14 @@ Example script demonstrating how to call camera wrapper to simplify using the ca
 cam1 = vis.CameraClass(1)
 
 # functions you can call to get camera information
-cam_intrinsics  = cam1._get_cam_intrinsics()
-cam_extrinsics = cam1._get_cam_extrinsics()
-cam_number = cam1._get_cam_number()
-cam_serial = cam1._get_cam_serial()
+cam_intrinsics  = cam1.get_cam_intrinsics()
+cam_extrinsics = cam1.get_cam_extrinsics()
+cam_number = cam1.get_cam_number()
+cam_serial = cam1.get_cam_serial()
 
 # begin loop to get images from camera
 while True:
-    img, depth, pointcloud, verts = cam1._get_next_frame()
+    img, depth, pointcloud, verts = cam1.get_next_frame()
 
     # CAN PUT ANYTHING HERE TO PROCESS THE IMAGES/DEPTH/POINTCLOUD
 

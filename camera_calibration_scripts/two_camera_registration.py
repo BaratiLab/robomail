@@ -51,8 +51,8 @@ camera_b = vis.CameraClass(camb)
 pcl_vis = vis.Vision3D()
 
 # get the point clouds
-_, _, pca, _ = camera_a._get_next_frame()
-_, _, pcb, _ = camera_b._get_next_frame()
+_, _, pca, _ = camera_a.get_next_frame()
+_, _, pcb, _ = camera_b.get_next_frame()
 
 # combine into single pointcloud
 pcda = o3d.geometry.PointCloud()
@@ -69,8 +69,8 @@ pcdb = pcl_vis.remove_background(pcdb, radius=1.65)
 
 # collect addition point clouds to combine
 for i in range(9):
-    _, _, pca, _ = camera_a._get_next_frame()
-    _, _, pcb, _ = camera_b._get_next_frame()
+    _, _, pca, _ = camera_a.get_next_frame()
+    _, _, pcb, _ = camera_b.get_next_frame()
     
     # combine into single pointcloud
     pcda.points.extend(pca.points)

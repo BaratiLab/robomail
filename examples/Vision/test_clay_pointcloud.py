@@ -13,10 +13,10 @@ cam5 = vis.CameraClass(5)
 pcl_vis = vis.Vision3D()
 
 # get the point clouds
-_, _, pc2, _ = cam2._get_next_frame()
-_, _, pc3, _ = cam3._get_next_frame()
-_, _, pc4, _ = cam4._get_next_frame()
-_, _, pc5, _ = cam5._get_next_frame()
+_, _, pc2, _ = cam2.get_next_frame()
+_, _, pc3, _ = cam3.get_next_frame()
+_, _, pc4, _ = cam4.get_next_frame()
+_, _, pc5, _ = cam5.get_next_frame()
 
 scaled_pcl = pcl_vis.fuse_point_clouds(pc2, pc3, pc4, pc5)
 

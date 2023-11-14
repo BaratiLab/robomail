@@ -71,7 +71,7 @@ print("World points: ", world_points.shape)
 # corner detection
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-img, depth, pointcloud, verts = cam._get_next_frame()
+img, depth, pointcloud, verts = cam.get_next_frame()
 bw_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # find checkerboard corners 

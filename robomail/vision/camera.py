@@ -2,6 +2,7 @@ import open3d as o3d
 import numpy as np
 import pyrealsense2 as rs
 from .cam_utils import get_cam_info
+import warnings
 
 class CameraClass():
     def __init__(self, cam_number, W=848, H=480):
@@ -30,19 +31,35 @@ class CameraClass():
         self.aligned_stream = rs.align(rs.stream.color) # alignment between color and depth
         self.point_cloud = rs.pointcloud()
 
-    def _get_cam_intrinsics(self):
+    def get_cam_intrinsics(self):
         return self.realsense_intrinsics
+
+    def _get_cam_intrinsics(self):
+        warnings.warn("DEPRECATED: use get_cam_intrinsics()")
+        return self.get_cam_intrinsics()
     
-    def _get_cam_extrinsics(self):
+    def get_cam_extrinsics(self):
         return self.realsense_extrinsics
+
+    def _get_cam_extrinsics(self):
+        warnings.warn("DEPRECATED: use get_cam_extrinsics()")
+        return self.get_cam_extrinsics()
     
-    def _get_cam_number(self):
+    def get_cam_number(self):
         return self.cam_number
+
+    def _get_cam_number(self):
+        warnings.warn("DEPRECATED: use get_cam_number()")
+        return self.get_cam_number()
     
-    def _get_cam_serial(self):
+    def get_cam_serial(self):
         return self.cam_serial
     
-    def _get_next_frame(self):
+    def _get_cam_serial(self):
+        warnings.warn("DEPRECATED: use get_cam_serial()")
+        return self.get_cam_serial()
+    
+    def get_next_frame(self):
         """
         Returns the color image, depth image, point cloud and verts of the next frame.
         """
@@ -67,4 +84,8 @@ class CameraClass():
             # continue
 
         return color_image, depth_image, pc, verts
+
+    def _get_next_frame(self):
+        warnings.warn("DEPRECATED: use get_next_frame()")
+        return self.get_next_frame()
     
