@@ -2,7 +2,7 @@
 Package for scripts used by the MAIL lab at CMU for the Franka robot setup
 
 ## To install:
-1. Navigate to the mail-robotics-package directory
+1. Navigate to the robomail directory
 2. Run pip install -e .
 
 ## Additional Dependencies
