@@ -7,7 +7,7 @@ class FullMessenger():
     """
     Class to send and receive objects over a socket connection. Stores all sent and recieved messages.
     """
-    def __init__(self, IP_Adress: str, port: int, is_host: bool) -> None:
+    def __init__(self, IP_Adress: str, port: int, is_host: bool, packet_size = 4096) -> None:
         """
         Class to send and receive objects over a socket connection. Stores all sent and recieved messages.
         :param host_ip: IP address of host.
@@ -15,7 +15,7 @@ class FullMessenger():
         :param is_host: Whether this instance is the host or not.
         :return: None
         """
-        self.messenger = PickleMessenger(host_ip=IP_Adress, port=port, is_host=is_host)
+        self.messenger = PickleMessenger(host_ip=IP_Adress, port=port, is_host=is_host, packet_size=packet_size)
         self.recieved_messgaes: Dict[str, Any] = {}
         self.sent_messages: Dict[str, List[Any]] = {}
         self.running: bool = False
@@ -24,7 +24,7 @@ class FullMessenger():
 
     def listen(self) -> None:
         """
-        Ran in a seperate thread. Continuously listens for new messages.
+        Run in a seperate thread. Continuously listens for new messages.
         :return: None
         """
         self.running = True
