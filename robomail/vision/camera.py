@@ -59,9 +59,12 @@ class CameraClass():
         warnings.warn("DEPRECATED: use get_cam_serial()")
         return self.get_cam_serial()
     
-    def get_next_frame(self):
+    def get_next_frame(self, get_point_cloud=True, get_verts=True):
         """
         Returns the color image, depth image, point cloud and verts of the next frame.
+        :param get_point_cloud: whether to return the point cloud. If False, returns None for the point cloud
+        :param get_verts: whether to return the verts. If False, returns None for the verts
+        :return: color image, depth image, point cloud, verts
         """
         frames = self.pipeline.wait_for_frames()
         frames = self.aligned_stream.process(frames)
@@ -70,20 +73,59 @@ class CameraClass():
         depth_frame = frames.get_depth_frame().as_depth_frame()
         color_image = np.asanyarray(color_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
-
-        points = self.point_cloud.calculate(depth_frame)
-        verts = np.asanyarray(points.get_vertices()).view(np.float32).reshape(-1, self.W, 3)  # xyz
-
-        rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(color_image), o3d.geometry.Image(depth_image), convert_rgb_to_intensity=False)
-        pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(width=self.W, height=self.H, fx=intrinsics.fx, fy=intrinsics.fy, cx=intrinsics.ppx, cy=intrinsics.ppy)
-        pc = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, pinhole_camera_intrinsic)
-
+        
         # skip empty frames
         if not np.any(depth_image):
             print("no depth")
             # continue
 
+        # If we don't want the point cloud or verts, return the color and depth images
+        if not (get_point_cloud or get_verts):
+            return color_image, depth_image, None, None
+
+        points = self.point_cloud.calculate(depth_frame)
+
+        # If we want the verts, calculate the verts. Else, just set verts to none.
+        if get_verts:
+            verts = np.asanyarray(points.get_vertices()).view(np.float32).reshape(-1, self.W, 3)  # xyz
+        else:
+            verts = None
+
+        # If we don't want the point cloud, return the color and depth images and verts
+        if not get_point_cloud:
+            return color_image, depth_image, None, verts
+
+        rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(color_image), o3d.geometry.Image(depth_image), convert_rgb_to_intensity=False)
+        pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(width=self.W, height=self.H, fx=intrinsics.fx, fy=intrinsics.fy, cx=intrinsics.ppx, cy=intrinsics.ppy)
+        pc = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, pinhole_camera_intrinsic)
+
         return color_image, depth_image, pc, verts
+    
+    # def get_next_frame(self):
+    #     """
+    #     Returns the color image, depth image, point cloud and verts of the next frame.
+    #     """
+    #     frames = self.pipeline.wait_for_frames()
+    #     frames = self.aligned_stream.process(frames)
+    #     color_frame = frames.get_color_frame()
+    #     intrinsics = color_frame.profile.as_video_stream_profile().intrinsics
+    #     depth_frame = frames.get_depth_frame().as_depth_frame()
+    #     color_image = np.asanyarray(color_frame.get_data())
+    #     depth_image = np.asanyarray(depth_frame.get_data())
+
+    #     points = self.point_cloud.calculate(depth_frame)
+    #     verts = np.asanyarray(points.get_vertices()).view(np.float32).reshape(-1, self.W, 3)  # xyz
+
+    #     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(color_image), o3d.geometry.Image(depth_image), convert_rgb_to_intensity=False)
+    #     pinhole_camera_intrinsic = o3d.camera.PinholeCameraIntrinsic(width=self.W, height=self.H, fx=intrinsics.fx, fy=intrinsics.fy, cx=intrinsics.ppx, cy=intrinsics.ppy)
+    #     pc = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, pinhole_camera_intrinsic)
+
+    #     # skip empty frames
+    #     if not np.any(depth_image):
+    #         print("no depth")
+    #         # continue
+
+    #     return color_image, depth_image, pc, verts
 
     def _get_next_frame(self):
         warnings.warn("DEPRECATED: use get_next_frame()")
