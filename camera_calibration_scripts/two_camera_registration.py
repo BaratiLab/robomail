@@ -38,62 +38,225 @@ CALIBRATION PARAMETER NOTES:
     - ensure calibration object facing both cameras with the same face as much as possible
 """
 
-cama = 5
-camb = 4
 
-calib = vis.CalibrationClass()
+def find_center_in_cam_frame(cam):
+    """
+    Some versions of calibration strategy remove the background of the point cloud. This requires
+    knoweldge of the center point of the area you intend to keep in the point cloud. Because these
+    are uncalibrated cameras, the quick process we use is as follows:
+        (1) Place some green clay (or a green object) at the center of the area to preserve.
+        (2) Run this script and use the returned center and for the remove_background function.
+    """
+    # initialize the cameras
+    camera = vis.CameraClass(cam)
 
-# initialize the cameras
-camera_a = vis.CameraClass(cama)
-camera_b = vis.CameraClass(camb)
+    # initialize the 3D vision code
+    pcl_vis = vis.Vision3D()
 
-# initialize the 3D vision code
-pcl_vis = vis.Vision3D()
+    # get the point clouds
+    _, _, pc, _ = camera.get_next_frame()
+    # pc = pcl_vis.remove_background(pc, radius=1.15) # optional for camera 5 if you're wearing a green shirt
+    o3d.visualization.draw_geometries([pc])
 
-# get the point clouds
-_, _, pca, _ = camera_a.get_next_frame()
-_, _, pcb, _ = camera_b.get_next_frame()
+    # get the centers in the camera frames
+    decolored = pcl_vis.lab_color_crop(pc)
+    points = np.asarray(decolored.points)
+    center = np.mean(points, axis = 0)
 
-# combine into single pointcloud
-pcda = o3d.geometry.PointCloud()
-pcda.points = pca.points
-pcda.colors = pca.colors
+    # visualize what the cloud cropped about the center looks like
+    pcd = pcl_vis.remove_background(pc, radius=0.15, center=center)
+    o3d.visualization.draw_geometries([pcd])
 
-pcdb = o3d.geometry.PointCloud()
-pcdb.points = pcb.points
-pcdb.colors = pcb.colors
+    # save the centers as numpy arrays
+    np.save("cam_centers/cam" + str(cam) + "_center.npy", center)
 
-# remove the background
-pcda = pcl_vis.remove_background(pcda, radius=1.65)
-pcdb = pcl_vis.remove_background(pcdb, radius=1.65)
+    return center
 
-# collect addition point clouds to combine
-for i in range(9):
+
+def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, keep_background=False, after_ransac=True):
+    """
+    """
+    calib = vis.CalibrationClass()
+
+    # initialize the cameras
+    camera_a = vis.CameraClass(cama)
+    camera_b = vis.CameraClass(camb)
+
+    # initialize the 3D vision code
+    pcl_vis = vis.Vision3D()
+
+    # get the point clouds
     _, _, pca, _ = camera_a.get_next_frame()
     _, _, pcb, _ = camera_b.get_next_frame()
-    
+
     # combine into single pointcloud
-    pcda.points.extend(pca.points)
-    pcda.colors.extend(pca.colors)
-    pcdb.points.extend(pcb.points)
-    pcdb.colors.extend(pcb.colors)
+    pcda = o3d.geometry.PointCloud()
+    pcda.points = pca.points
+    pcda.colors = pca.colors
 
-pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
-pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+    pcdb = o3d.geometry.PointCloud()
+    pcdb.points = pcb.points
+    pcdb.colors = pcb.colors
 
-# remove the background
-pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
-pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
+    # collect addition point clouds to combine
+    for i in range(9):
+        _, _, pca, _ = camera_a.get_next_frame()
+        _, _, pcb, _ = camera_b.get_next_frame()
+        
+        # combine into single pointcloud
+        pcda.points.extend(pca.points)
+        pcda.colors.extend(pca.colors)
+        pcdb.points.extend(pcb.points)
+        pcdb.colors.extend(pcb.colors)
 
-# RANSAC registration
-voxel_size = 0.008 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
-source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
-result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+    pcda, _ = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+    pcdb, _ = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
 
-# ICP finetuning
-result_icp = calib.refine_registration(source, target, voxel_size, result_ransac.transformation)
-cama_to_camb = result_icp.transformation
-pcda.transform(cama_to_camb)
-o3d.visualization.draw_geometries([pcda, pcdb])
+    # load in source center and target center from numpy arrays
+    source_center = np.load("cam_centers/cam" + str(cama) + "_center.npy")
+    target_center = np.load("cam_centers/cam" + str(camb) + "_center.npy")
 
-np.save("live_registration/2Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
+    # if we are removing the background before ransac
+    if not keep_background and not after_ransac:
+        # Removing everything except calibration object and stage
+        pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
+        pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+    # else remove the background noise of people in the office but not the scene on the table
+    else:
+        # Remove far background
+        pcda = pcl_vis.remove_background(pcda, radius=0.95, center=source_center)
+        pcdb = pcl_vis.remove_background(pcdb, radius=0.95, center=target_center)
+
+    # RANSAC registration
+    # voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
+    # distance_threshold = 0.001
+    source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
+    result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+
+    if not keep_background and after_ransac:
+        # Removing everything except calibration object and stage
+        source = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
+        target = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+
+    # ICP finetuning
+    result_icp = calib.refine_registration(source, target, distance_threshold, result_ransac.transformation)
+    cama_to_camb = result_icp.transformation
+    pcda.transform(cama_to_camb)
+    o3d.visualization.draw_geometries([pcda, pcdb])
+
+    np.save("live_registration/28Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
+
+
+# TODO:
+    # (1) function to get the center of the elevated stage in each camera frame (for cropping purposes)
+    # (2) main function with flags where you define the cameras, voxel size, distance threshold and if there is
+    # any background removal (options are no removal, after ransac removal, or complete removal).
+
+if __name__ == "__main__":
+    cama = 3
+    camb = 4
+
+    # if there are no arrays for camera numbers in /cam_centers folder
+    # _ = find_center_in_cam_frame(5)
+
+    # calibrate the two cameras
+    align_two_cameras(cama, camb, voxel_size=0.015, distance_threshold=0.001, keep_background=False, after_ransac=True)
+
+# calib = vis.CalibrationClass()
+
+# # initialize the cameras
+# camera_a = vis.CameraClass(cama)
+# camera_b = vis.CameraClass(camb)
+
+# # initialize the 3D vision code
+# pcl_vis = vis.Vision3D()
+
+# # get the point clouds
+# _, _, pca, _ = camera_a.get_next_frame()
+# _, _, pcb, _ = camera_b.get_next_frame()
+
+# # combine into single pointcloud
+# pcda = o3d.geometry.PointCloud()
+# pcda.points = pca.points
+# pcda.colors = pca.colors
+
+# pcdb = o3d.geometry.PointCloud()
+# pcdb.points = pcb.points
+# pcdb.colors = pcb.colors
+
+# # # remove the background
+# # pcda = pcl_vis.remove_background(pcda, radius=1.65)
+# # pcdb = pcl_vis.remove_background(pcdb, radius=1.65)
+
+# # collect addition point clouds to combine
+# for i in range(9):
+#     _, _, pca, _ = camera_a.get_next_frame()
+#     _, _, pcb, _ = camera_b.get_next_frame()
+    
+#     # combine into single pointcloud
+#     pcda.points.extend(pca.points)
+#     pcda.colors.extend(pca.colors)
+#     pcdb.points.extend(pcb.points)
+#     pcdb.colors.extend(pcb.colors)
+
+# pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+# pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+
+# source_center = np.array([ 0.12245162, -0.10215384,  0.59037568]) # For Camera 2
+# target_center = np.array([-0.03600609, -0.01873322,  0.50538808]) # For Camera 3
+
+
+# # Removing everything except calibration object and stage
+# pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
+# pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+
+# # # remove the background
+# # pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
+# # pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
+
+
+# # RANSAC registration
+# voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
+# distance_threshold = 0.001
+# source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
+# result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+
+# # TODO: Make a helper function out of the code below: 
+# # source_decolored = pcl_vis.lab_color_crop(source)
+# # source_points = np.asarray(source_decolored.points)
+# # source_center = np.mean(source_points, axis = 0)
+
+# # target_decolored = pcl_vis.lab_color_crop(target)
+# # target_points = np.asarray(target_decolored.points)
+# # target_center = np.mean(target_points, axis = 0)
+
+# # print(f"Source Center = {source_center}")
+# # print(f"Target Center = {target_center}")
+
+
+# # source_center = np.array([ 0.12245162, -0.10215384,  0.59037568]) # For Camera 2
+# # target_center = np.array([-0.03600609, -0.01873322,  0.50538808]) # For Camera 3
+
+
+# # # Removing everything except calibration object and stage
+# # source = pcl_vis.remove_background(source, radius=0.15, center=source_center)
+# # target = pcl_vis.remove_background(target, radius=0.15, center=target_center)
+
+# # ICP finetuning
+# result_icp = calib.refine_registration(source, target, distance_threshold, result_ransac.transformation)
+# cama_to_camb = result_icp.transformation
+# pcda.transform(cama_to_camb)
+# o3d.visualization.draw_geometries([pcda, pcdb])
+
+# # # RANSAC registration
+# # voxel_size = 0.008 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
+# # source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
+# # result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+
+# # # ICP finetuning
+# # result_icp = calib.refine_registration(source, target, voxel_size, result_ransac.transformation)
+# # cama_to_camb = result_icp.transformation
+# # pcda.transform(cama_to_camb)
+# # o3d.visualization.draw_geometries([pcda, pcdb])
+
+# np.save("live_registration/28Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
