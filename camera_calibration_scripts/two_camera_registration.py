@@ -18,6 +18,25 @@ GENERAL CALIBRATION INSTRUCTIONS FOR INTER-CAMERA TRANSFORMS:
     calibration quality, as these are the main parameters we can adjust depending on camera views. More information on
     parameters that were successful for previous calibration runs are provided below.
 
+WORKFLOW:
+(1) Create a new folder in /live_registration for the date you are recalibrating the cameras
+(2) Setup the scene as described above
+(3) Select recommended starting parameters for clibrating each camera pair.
+(4) Run the camera registration script and review the quality of the alignment. RANSAC and ICP use feature matching that
+    has some stochasticity, so the quality of alignment can vary greatly. If you see that the system is overfitting the a 
+    plane, we'd recommend increasing the voxel size, or experimenting with the options of background removal before both
+    or either RANSAC and ICP. If you see that the system is missing finer details, we'd recommend reducing the voxel size.
+    If the system is failing with rotational alignment, we recommend using a poster board as a plane in the background to
+    improve rotational alignment and ensure that you turn background remove off at least for the RANSAC initial alignment.
+(5) Save the calibration extrinsic matrices with different names until you have a camera alignment that you are happy with.
+    Please note that the matrices stored in this automatic save folder are not the official extrinsic matrices accessed by 
+    the robomail package.
+(6) Navigate to /robomail/vision/calib/Past_Calibrations and create a new folder with the current date in the format 
+    PreDayMonthYear indicating the transforms that were used pre the current day. Move the current extrinsic matrices to 
+    this folder so we have a record of the date periods different extrinsics were used. 
+(7) Move the best calibration extrinsics with each camera to /robomail/vision/calib and rename each file to 'realsense_cameraAB'
+    where A is the camera frame we are transforming and B is the camera frame we are transforming to. 
+
 CALIBRATION PARAMETER NOTES:
 (Cam 2/3) 
     - lean the white posterboard against camera 5 at approx a 60 degree angle
@@ -121,6 +140,7 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, kee
         # Removing everything except calibration object and stage
         pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
         pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+
     # else remove the background noise of people in the office but not the scene on the table
     else:
         # Remove far background
@@ -128,8 +148,6 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, kee
         pcdb = pcl_vis.remove_background(pcdb, radius=0.95, center=target_center)
 
     # RANSAC registration
-    # voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
-    # distance_threshold = 0.001
     source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
     result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
@@ -146,12 +164,6 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, kee
 
     np.save("live_registration/28Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
 
-
-# TODO:
-    # (1) function to get the center of the elevated stage in each camera frame (for cropping purposes)
-    # (2) main function with flags where you define the cameras, voxel size, distance threshold and if there is
-    # any background removal (options are no removal, after ransac removal, or complete removal).
-
 if __name__ == "__main__":
     cama = 3
     camb = 4
@@ -160,103 +172,4 @@ if __name__ == "__main__":
     # _ = find_center_in_cam_frame(5)
 
     # calibrate the two cameras
-    align_two_cameras(cama, camb, voxel_size=0.015, distance_threshold=0.001, keep_background=False, after_ransac=True)
-
-# calib = vis.CalibrationClass()
-
-# # initialize the cameras
-# camera_a = vis.CameraClass(cama)
-# camera_b = vis.CameraClass(camb)
-
-# # initialize the 3D vision code
-# pcl_vis = vis.Vision3D()
-
-# # get the point clouds
-# _, _, pca, _ = camera_a.get_next_frame()
-# _, _, pcb, _ = camera_b.get_next_frame()
-
-# # combine into single pointcloud
-# pcda = o3d.geometry.PointCloud()
-# pcda.points = pca.points
-# pcda.colors = pca.colors
-
-# pcdb = o3d.geometry.PointCloud()
-# pcdb.points = pcb.points
-# pcdb.colors = pcb.colors
-
-# # # remove the background
-# # pcda = pcl_vis.remove_background(pcda, radius=1.65)
-# # pcdb = pcl_vis.remove_background(pcdb, radius=1.65)
-
-# # collect addition point clouds to combine
-# for i in range(9):
-#     _, _, pca, _ = camera_a.get_next_frame()
-#     _, _, pcb, _ = camera_b.get_next_frame()
-    
-#     # combine into single pointcloud
-#     pcda.points.extend(pca.points)
-#     pcda.colors.extend(pca.colors)
-#     pcdb.points.extend(pcb.points)
-#     pcdb.colors.extend(pcb.colors)
-
-# pcda, ind = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
-# pcdb, ind = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
-
-# source_center = np.array([ 0.12245162, -0.10215384,  0.59037568]) # For Camera 2
-# target_center = np.array([-0.03600609, -0.01873322,  0.50538808]) # For Camera 3
-
-
-# # Removing everything except calibration object and stage
-# pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
-# pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
-
-# # # remove the background
-# # pcda = pcl_vis.remove_background(pcda, radius=1.65) # 0.9
-# # pcdb = pcl_vis.remove_background(pcdb, radius=1.65) # 0.9
-
-
-# # RANSAC registration
-# voxel_size = 0.005 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
-# distance_threshold = 0.001
-# source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
-# result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
-
-# # TODO: Make a helper function out of the code below: 
-# # source_decolored = pcl_vis.lab_color_crop(source)
-# # source_points = np.asarray(source_decolored.points)
-# # source_center = np.mean(source_points, axis = 0)
-
-# # target_decolored = pcl_vis.lab_color_crop(target)
-# # target_points = np.asarray(target_decolored.points)
-# # target_center = np.mean(target_points, axis = 0)
-
-# # print(f"Source Center = {source_center}")
-# # print(f"Target Center = {target_center}")
-
-
-# # source_center = np.array([ 0.12245162, -0.10215384,  0.59037568]) # For Camera 2
-# # target_center = np.array([-0.03600609, -0.01873322,  0.50538808]) # For Camera 3
-
-
-# # # Removing everything except calibration object and stage
-# # source = pcl_vis.remove_background(source, radius=0.15, center=source_center)
-# # target = pcl_vis.remove_background(target, radius=0.15, center=target_center)
-
-# # ICP finetuning
-# result_icp = calib.refine_registration(source, target, distance_threshold, result_ransac.transformation)
-# cama_to_camb = result_icp.transformation
-# pcda.transform(cama_to_camb)
-# o3d.visualization.draw_geometries([pcda, pcdb])
-
-# # # RANSAC registration
-# # voxel_size = 0.008 # 0.018 # 0.005 # 0.001 # 0.025 # in meters 
-# # source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
-# # result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
-
-# # # ICP finetuning
-# # result_icp = calib.refine_registration(source, target, voxel_size, result_ransac.transformation)
-# # cama_to_camb = result_icp.transformation
-# # pcda.transform(cama_to_camb)
-# # o3d.visualization.draw_geometries([pcda, pcdb])
-
-# np.save("live_registration/28Nov2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
+    align_two_cameras(cama, camb, voxel_size=0.015, distance_threshold=0.001, keep_background=True, after_ransac=True)
