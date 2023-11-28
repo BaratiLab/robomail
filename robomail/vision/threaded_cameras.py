@@ -4,7 +4,7 @@ import numpy as np
 
 class ThreadedCameras:
     """
-    Manages multiple camera instances in separate threads to capture frames asynchronously.
+    Manages multiple camera instances in a separate thread to capture frames asynchronously.
     Although asyncronus, the frames are synchronized.
     """
 
@@ -67,7 +67,7 @@ class ThreadedCameras:
 
     def get_frames(self):
         """
-        Retrieves the latest captured frames from cameras.
+        Retrieves the latest captured frames from the cameras.
 
         Returns:
         :return: A copy of the captured frames.
