@@ -179,22 +179,29 @@ class Vision3D:
             pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
         )
 
+        # o3d.visualization.draw_geometries([pointcloud])
+
         # color thresholding
         pointcloud = self.lab_color_crop(pointcloud)
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
         )
 
+        # o3d.visualization.draw_geometries([pointcloud])
+
         # get shape of clay base
         pointcloud.estimate_normals()
         downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
         downpdc_points = np.asarray(downpdc.points)
         # polygon_indices = np.where(downpdc_points[:,2] < 0.236) # PREVIOUS BEFORE 8/29
-        polygon_indices = np.where(downpdc_points[:, 2] < 0.22)
+        # polygon_indices = np.where(downpdc_points[:, 2] < 0.22) # PREVIOUS BEFORE 11/30
+        polygon_indices = np.where(downpdc_points[:, 2] < 0.242)
 
         # polygon_indices = np.where(downpdc_points[:,2] < 0.234)
         polygon_pcl = o3d.geometry.PointCloud()
         polygon_pcl.points = o3d.utility.Vector3dVector(downpdc_points[polygon_indices])
+
+        # o3d.visualization.draw_geometries([polygon_pcl])
 
         # generate a 2d grid of points for the base
         base_plane = []
@@ -208,7 +215,9 @@ class Vision3D:
         )  # create grid that covers full area of 2d polygon
         # z = 0.234 # height of the clay base
 
-        z = 0.21
+        z = 0.23
+        # print("\n\n\n\nMODIFIED!!!")
+        # z = 0.21 # PREVIOUS BEFORE 11/30
         # z = 0.232 # PREVIOUS BEFORE 8/29
         zz = np.ones(len(xx.flatten())) * z
         points = np.vstack((xx.flatten(), yy.flatten(), zz)).T
@@ -248,8 +257,8 @@ class Vision3D:
         points = points[idxs]
 
         # re-process the processed_pcl to center
-        pc_center = np.array([0.6, 0.0, 0.24])
-        # pc_center = base_cloud.get_center() # TODO: have the center hard coded for consistency w.r.t. cloud
+        # pc_center = np.array([0.6, 0.0, 0.24])
+        pc_center = base_cloud.get_center() 
         centered_points = points - pc_center
 
         scale = 10
