@@ -133,7 +133,7 @@ class CalibrationClass:
 
         return result
 
-    def refine_registration(self, source, target, voxel_size, trans_global):
+    def refine_registration(self, source, target, distance_threshold, trans_global):
         """
         Applies iterative-closest point algorithm (ICP) to refine global registration
         NOTE: Global registration should be run on source and target point clouds before using
@@ -142,14 +142,12 @@ class CalibrationClass:
         Args:
         source (o3d.geometry.PointCloud): source point cloud
         target (o3d.geometry.PointCloud): target point cloud
-        voxel_size (float): voxel size used to define distance threshold for alignment
+        distance_threshold (float): distance threshold for alignment
         trans_global (npt.NDArray): result of global registration, matrix of size (4,4), can use result.transformation
 
         Returns:
         result (o3d.pipelines.registration.RegistrationResult): output of Open3D ICP registration function
         """
-        distance_threshold = voxel_size * 0.5  # define maximum correspondence distance
-
         # calculate global registration evaluation
         print("\nGlobal registration alignment evaluation:")
         evaluation = o3d.pipelines.registration.evaluate_registration(
