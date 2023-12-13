@@ -284,24 +284,53 @@ class GotoJointsLive:
         self.fa.stop_skill()
 
 if __name__ == "__main__":
+    TEST_POSE = False
+    TEST_JOINTS = True
     # go to pose test
-    controller = GotoPoseLive()
-    start_time = time.time()
-    goal_pose = deepcopy(FC.HOME_POSE)
+    if TEST_POSE:
+        print("test pose")
+        controller = GotoPoseLive()
+        start_time = time.time()
+        goal_pose = deepcopy(FC.HOME_POSE)
 
-    controller.start()
-    t = 0
-    while t < 20: 
-        t = time.time() - start_time   
-        x = 0.5 + 0.1*np.sin(t)
-        y = 0.1*np.cos(t/1.5)
-        z = 0.4
-        goal_pose.translation = np.array([x,y,z])
-        time.sleep(np.random.uniform(0.01, 0.1))
-        controller.set_goal_pose(goal_pose)
-        # time.sleep(1)
-        # current_pose = controller.fa.get_pose()
-        # controller.step(goal_pose=goal_pose, current_pose=current_pose)
-    controller.stop()
+        controller.start()
+        t = 0
+        while t < 20: 
+            t = time.time() - start_time   
+            x = 0.5 + 0.1*np.sin(t)
+            y = 0.1*np.cos(t/1.5)
+            z = 0.4
+            goal_pose.translation = np.array([x,y,z])
+            time.sleep(np.random.uniform(0.01, 0.1))
+            controller.set_goal_pose(goal_pose)
+            # time.sleep(1)
+            # current_pose = controller.fa.get_pose()
+            # controller.step(goal_pose=goal_pose, current_pose=current_pose)
+        controller.stop()
+
+    # go to joints test
+    if TEST_JOINTS:
+        print("test joints")
+        # reset_joints()
+        controller = GotoJointsLive()
+        start_time = time.time()
+        goal_joints = deepcopy(FC.HOME_JOINTS)
+
+        controller.start()
+        t = 0
+        while t < 20: 
+            t = time.time() - start_time   
+            goal_joints[5] = FC.HOME_JOINTS[5] + 0.3*np.sin(t)
+            goal_joints[6] = FC.HOME_JOINTS[6] + 0.3*np.cos(t/1.5)
+            time.sleep(np.random.uniform(0.01, 0.1))
+            controller.set_goal_joints(goal_joints)
+            # current_joints = controller.fa.get_joints()
+            # controller.step(goal_joints=goal_joints, current_joints=current_joints)
+            
+            if t > 10:
+                controller.step(goal_joints=FC.HOME_JOINTS)
+                break
+
+        controller.stop()
 
 
