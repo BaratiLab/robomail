@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name="mail-robotics-package",
+    name="robomail",
     version = "0.1",
     packages = find_packages(),
     install_requires = ["frankapy",
