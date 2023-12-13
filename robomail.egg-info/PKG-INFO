@@ -1,9 +1,0 @@
-Metadata-Version: 2.1
-Name: robomail
-Version: 0.1
-Requires-Dist: frankapy
-Requires-Dist: numpy
-Requires-Dist: pyrealsense2
-Requires-Dist: open3d
-Requires-Dist: opencv-python
-Requires-Dist: shapely
