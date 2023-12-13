@@ -1,0 +1,6 @@
+frankapy
+numpy
+pyrealsense2
+open3d
+opencv-python
+shapely
