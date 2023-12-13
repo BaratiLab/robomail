@@ -92,7 +92,7 @@ def find_center_in_cam_frame(cam):
     return center
 
 
-def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, keep_background=False, after_ransac=True):
+def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001):
     """
     """
     calib = vis.CalibrationClass()
@@ -130,34 +130,38 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, kee
 
     pcda, _ = pcda.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
     pcdb, _ = pcdb.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+    # pcda2 = pcda.copy()
+    # pcdb2 = pcdb.copy()
 
     # load in source center and target center from numpy arrays
     source_center = np.load("cam_centers/cam" + str(cama) + "_center.npy")
     target_center = np.load("cam_centers/cam" + str(camb) + "_center.npy")
 
-    # if we are removing the background before ransac
-    if not keep_background and not after_ransac:
-        # Removing everything except calibration object and stage
-        pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
-        pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+    # Remove far background
+    pcda = pcl_vis.remove_background(pcda, radius=0.95, center=source_center)
+    pcdb = pcl_vis.remove_background(pcdb, radius=0.95, center=target_center)
 
-    # else remove the background noise of people in the office but not the scene on the table
-    else:
-        # Remove far background
-        pcda = pcl_vis.remove_background(pcda, radius=0.95, center=source_center)
-        pcdb = pcl_vis.remove_background(pcdb, radius=0.95, center=target_center)
-
-    # RANSAC registration
+    # first RANSAC registration with background plane for coarse alignment
     source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size, pcda, pcdb)
-    result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
+    first_result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
-    if not keep_background and after_ransac:
-        # Removing everything except calibration object and stage
-        source = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
-        target = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+    # reprocess data with result_ransac transformation and remove background and reduce voxel size
+    pcda = pcl_vis.remove_background(pcda, radius=0.15, center=source_center)
+    pcdb = pcl_vis.remove_background(pcdb, radius=0.15, center=target_center)
+    source, target, source_down, target_down, source_fpfh, target_fpfh = calib.prepare_dataset(voxel_size*0.2, 
+                                                                                               pcda.transform(first_result_ransac.transformation), 
+                                                                                               pcdb)
+
+    # # Removing everything except calibration object and stage
+    # source = pcl_vis.remove_background(pcda2, radius=0.15, center=source_center)
+    # target = pcl_vis.remove_background(pcdb2, radius=0.15, center=target_center)
+
+    # second RANSAC registration
+    second_result_ransac = calib.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
     # ICP finetuning
-    result_icp = calib.refine_registration(source, target, distance_threshold, result_ransac.transformation)
+    result_ransac = second_result_ransac.transformation # @ first_result_ransac.transformation 
+    result_icp = calib.refine_registration(source, target, distance_threshold, result_ransac)
     cama_to_camb = result_icp.transformation
     pcda.transform(cama_to_camb)
     o3d.visualization.draw_geometries([pcda, pcdb])
@@ -172,4 +176,4 @@ if __name__ == "__main__":
     # _ = find_center_in_cam_frame(5)
 
     # calibrate the two cameras
-    align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, keep_background=True, after_ransac=False)
+    align_two_cameras(cama, camb, voxel_size=0.015, distance_threshold=0.001)
