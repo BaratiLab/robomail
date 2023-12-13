@@ -45,22 +45,26 @@ class GotoPoseLive:
         self.pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=10) #used to update the skill
         self.message_id = 0 #id counter for the ross message
 
-    def _step(self, current_pose=None, ros_sleep = True):
+    def _step(self, goal_pose=None, current_pose=None, ros_sleep = True):
         """
         This method is used to step the robot control once. It is called by the run function every timestep. The user should NOT use this method.
         If the user wants to control the robot themselves, use the public alias step() method.
 
+        :param goal_pose: the goal pose of the robot. If none, uses the goal pose set by the user via set_goal_pose().
         :param current_pose: the current pose of the robot. If none, uses gets the current pose via fa.
         :param ros_sleep: if true, sleeps at the end of the command to ensure the control frequency is 1/dt.
         """
 
         if current_pose is None:
-            cur_pose = self.fa.get_pose() 
+            current_pose = self.fa.get_pose() 
+        
+        if goal_pose is not None:
+            self.set_goal_pose(goal_pose)
 
-        delta_motion = self.goal_pose.translation - cur_pose.translation
+        delta_motion = self.goal_pose.translation - current_pose.translation
         self.move_pose = deepcopy(self.goal_pose)
         if (np.linalg.norm(delta_motion) > self.step_size):
-            self.move_pose.translation = (delta_motion/np.linalg.norm(delta_motion))*self.step_size + cur_pose.translation
+            self.move_pose.translation = (delta_motion/np.linalg.norm(delta_motion))*self.step_size + current_pose.translation
             
         if self.initialize: # start the skill
             if self.cartesian_impedances != None:
@@ -78,7 +82,7 @@ class GotoPoseLive:
             
             # ross messages:
             traj_gen_proto_msg = PosePositionSensorMessage(
-                id=id, timestamp=timestamp,
+                id=self.message_id, timestamp=timestamp,
                 position=self.move_pose.translation, quaternion=self.move_pose.quaternion
             )
             ros_msg = make_sensor_group_msg(
@@ -93,18 +97,19 @@ class GotoPoseLive:
             self.rate.sleep() #sleep for dt. This should only sleep if it is called within self.dt of the previous call.
         self.message_id += 1
     
-    def step(self, current_pose=None, ros_sleep = True):
+    def step(self, goal_pose=None, current_pose=None, ros_sleep = True):
         """
         This method allows the user to run the controller one step at a time, instead of using asynchronous control.
         It is an alias for the private _step() method, with protections to ensure it is not called when the asynchronous control is running.
         
+        :param goal_pose: the goal pose of the robot. If none, uses the goal pose set by the user via set_goal_pose().
         :param current_pose: the current pose of the robot. If none, uses gets the current pose via FrankaArm.
         :param ros_sleep: if true, sleeps at the end of the command to ensure the control frequency is 1/dt.
         """
         if self.running:
             raise Exception("Cannot call step() while the threaded controller is running. Stop the asynchronous control first by calling stop()")
         else:
-            self._step(current_pose=current_pose, ros_sleep=ros_sleep)
+            self._step(goal_pose, current_pose, ros_sleep)
 
 
     def _run(self):
@@ -113,55 +118,6 @@ class GotoPoseLive:
         """
         while self.running:
             self._step(ros_sleep=True)
-
-    # def run(self):
-    #     """
-    #     Runs the skill. This is called when the start() method is called.
-    #     """
-    #     print('start run')
-    #     rate = rospy.Rate(1/self.dt) #set the rospy rate.
-    #     pub = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=10) #used to update the skill
-    #     initialize = True #set initilize to true
-    #     id = 0 #id counter for the ross message
-
-    #     # loop untill the 'running' flag is set to false
-    #     while self.running:
-    #         # If the robot is trying to move more than step_size, clip the motion.
-    #         cur_pose = self.fa.get_pose() 
-    #         delta_motion = self.goal_pose.translation - cur_pose.translation
-    #         self.pose = deepcopy(self.goal_pose)
-    #         if (np.linalg.norm(delta_motion) > self.step_size):
-    #             self.pose.translation = (delta_motion/np.linalg.norm(delta_motion))*self.step_size + cur_pose.translation
-                
-
-    #         if initialize: # start the skill
-    #             if self.cartesian_impedances != None:
-    #                 self.fa.goto_pose(self.pose, duration=self.T, dynamic=True, buffer_time=10,
-    #                     cartesian_impedances=self.cartesian_impedances)
-    #             else:
-    #                 self.fa.goto_pose(self.pose, duration=self.T, dynamic=True, buffer_time=10)
-
-    #             initialize = False # no longer initalizing
-    #             init_time = rospy.Time.now().to_time() # get initial time.
-            
-    #         else: # send update message
-    #             # print("update go to pose", self.pose.translation)
-    #             timestamp = rospy.Time.now().to_time() - init_time # update time stamp
-                
-    #             # ross messages:
-    #             traj_gen_proto_msg = PosePositionSensorMessage(
-    #                 id=id, timestamp=timestamp,
-    #                 position=self.pose.translation, quaternion=self.pose.quaternion
-    #             )
-    #             ros_msg = make_sensor_group_msg(
-    #                 trajectory_generator_sensor_msg=sensor_proto2ros_msg(
-    #                     traj_gen_proto_msg, SensorDataMessageType.POSE_POSITION),
-    #             )
-    #             # uncomment below to log the ross messages to the terminal
-    #             # rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
-    #             pub.publish(ros_msg) # send message to franka
-    #         rate.sleep() #sleep for dt.
-    #         id += 1
 
     def get_goal_pose(self):
         # Returns the goal pose
@@ -182,7 +138,7 @@ class GotoPoseLive:
         """
         # start _run() in a new thread
         self.running = True
-        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
     
     def stop(self):
@@ -231,15 +187,21 @@ class GotoJointsLive:
         self.rate: rospy.Rate = rospy.Rate(1/self.dt) #set the rospy rate.
         self.pub: rospy.Publisher = rospy.Publisher(FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, SensorDataGroup, queue_size=10) #used to update the skill
 
-    def _step(self, current_joints:np.ndarray = None, ros_sleep:bool = True) -> None:
+    def _step(self, goal_joints:np.ndarray = None, current_joints:np.ndarray = None, ros_sleep:bool = True) -> None:
         """
         This method is used to step the robot control once. It is called by the run function every timestep. However, if the user
         wants to control the robot themselves, they can call this method to step the robot once.
+        
+        :param goal_joints: the goal joints of the robot. If none, uses the goal joints set by the user via set_goal_joints().
         :param current_joints: the current joints of the robot. If none, uses gets the current joints via FrankaArm.
         :param ros_sleep: if true, sleeps at the end of the command to
         """
         if current_joints is None:
             current_joints: np.ndarray = self.fa.get_joints()
+
+        if goal_joints is not None:
+            self.set_goal_joints(goal_joints)
+
         delta_joints: np.ndarray = self.goal_joints - current_joints
         move_joints: np.ndarray = deepcopy(self.goal_joints)
         for i in range(len(delta_joints)):
@@ -275,18 +237,19 @@ class GotoJointsLive:
             self.rate.sleep() # sleep for dt. This should only sleep if it is called within self.dt of the previous call.
         self.message_id += 1
 
-    def step(self, current_joints:np.ndarray = None, ros_sleep:bool = True) -> None:
+    def step(self, goal_joints:np.ndarray = None, current_joints:np.ndarray = None, ros_sleep:bool = True) -> None:
         """
         This method allows the user to run the controller one step at a time, instead of using asynchronous control.
         It is an alias for the private _step() method, with protections to ensure it is not called when the asynchronous control is running.
         
+        :param goal_joints: the goal joints of the robot. If none, uses the goal joints set by the user via set_goal_joints().
         :param current_joints: the current joints of the robot. If none, uses gets the current joints via FrankaArm.
         :param ros_sleep: if true, sleeps at the end of the command to ensure the control frequency is 1/dt.
         """
         if self.running:
             raise Exception("Cannot call step() while the threaded controller is running. Stop the asynchronous control first by calling stop()")
         else:
-            self._step(current_joints=current_joints, ros_sleep=ros_sleep)
+            self._step(goal_joints, current_joints, ros_sleep)
 
 
     def _run(self) -> None:  
@@ -295,48 +258,6 @@ class GotoJointsLive:
         """
         while self.running:
             self._step(ros_sleep=True)
-        # rate = rospy.Rate(hz=1/self.dt) #set the rospy rate.
-        # pub = rospy.Publisher(name=FC.DEFAULT_SENSOR_PUBLISHER_TOPIC, data_class=SensorDataGroup, queue_size=10)
-        # initialize: bool = True #set initilize to true
-        # id: int = 0 #id counter for the ross message
-
-        # # loop untill the 'running' flag is set to false
-        # while self.running:
-        #     # If the robot is trying to move more than max_rotation, clip the motion.
-        #     cur_joints: np.ndarray = self.fa.get_joints()
-        #     move_to_joints:np.ndarray = self.get_move_to_joints()
-        #     delta_joints: np.ndarray = move_to_joints - cur_joints
-        #     for i in range(len(delta_joints)):
-        #         if abs(delta_joints[i]) > self.max_rotation:
-        #             move_to_joints[i] = self.max_rotation*np.sign(delta_joints[i]) + cur_joints[i]
-        #             print('violating max rotation')
-
-        #     if initialize: # start the skill
-        #         self.fa.goto_joints(joints=move_to_joints, duration=self.T, dynamic=True, ignore_virtual_walls=self.ignore_virtual_walls, 
-        #                             k_gains=self.k_gains, d_gains=self.d_gains)
-
-        #         initialize = False
-        #         init_time: float = rospy.Time.now().to_time() # get initial time.
-            
-        #     else: # send update message
-        #         # print("update go to pose", self.pose.translation)
-        #         timestamp: float = rospy.Time.now().to_time() - init_time # update time stamp
-
-        #         # ross messages:
-        #         traj_gen_proto_msg = JointPositionSensorMessage(
-        #             id=id, timestamp=timestamp,
-        #             joints = move_to_joints
-        #         )
-        #         ros_msg: SensorDataGroup = make_sensor_group_msg(
-        #             trajectory_generator_sensor_msg=sensor_proto2ros_msg(
-        #                 sensor_proto_msg=traj_gen_proto_msg, sensor_data_type=SensorDataMessageType.POSE_POSITION),
-        #         )
-
-        #         # uncomment below to log the ross messages to the terminal
-        #         # rospy.loginfo('Publishing: ID {}'.format(traj_gen_proto_msg.id))
-        #         pub.publish(ros_msg)
-        #     rate.sleep() # sleep for dt.
-        #     id += 1
 
     def get_goal_joints(self) -> np.ndarray:
         # Returns the goal joints
@@ -350,7 +271,7 @@ class GotoJointsLive:
     def start(self) -> None:
         # start _run() in a new thread
         self.running = True
-        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
 
     
@@ -365,11 +286,22 @@ class GotoJointsLive:
 if __name__ == "__main__":
     # go to pose test
     controller = GotoPoseLive()
-    for i in range(100):
-        x = 0.5 + 0.1*np.sin(i/10)
-        y = np.cos(i/10)
+    start_time = time.time()
+    goal_pose = deepcopy(FC.HOME_POSE)
+
+    controller.start()
+    t = 0
+    while t < 20: 
+        t = time.time() - start_time   
+        x = 0.5 + 0.1*np.sin(t)
+        y = 0.1*np.cos(t/1.5)
         z = 0.4
+        goal_pose.translation = np.array([x,y,z])
         time.sleep(np.random.uniform(0.01, 0.1))
-        controller.set_goal_translation(np.array([x,y,z]))
-        controller.step()
+        controller.set_goal_pose(goal_pose)
+        # time.sleep(1)
+        # current_pose = controller.fa.get_pose()
+        # controller.step(goal_pose=goal_pose, current_pose=current_pose)
+    controller.stop()
+
 
