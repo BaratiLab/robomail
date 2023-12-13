@@ -327,9 +327,10 @@ if __name__ == "__main__":
             # current_joints = controller.fa.get_joints()
             # controller.step(goal_joints=goal_joints, current_joints=current_joints)
             
-            if t > 10:
-                controller.step(goal_joints=FC.HOME_JOINTS)
-                break
+            # Test if the step will throw an error if the asynchronous controller is running
+            # if t > 10:
+            #     controller.step(goal_joints=FC.HOME_JOINTS)
+            #     break
 
         controller.stop()
 
