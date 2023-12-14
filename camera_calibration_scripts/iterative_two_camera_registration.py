@@ -117,6 +117,26 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001):
     pcdb.points = pcb.points
     pcdb.colors = pcb.colors
 
+    if cama == 3:
+        camera_2 = vis.CameraClass(2)
+        camera_5 = vis.CameraClass(5)
+
+        # camera transforms
+        cam23_transform = np.load('/home/alison/Documents/GitHub/mail-robotics-package/robomail/vision/calib/realsense_camera23.npy')
+        cam54_transform = np.load('/home/alison/Documents/GitHub/mail-robotics-package/robomail/vision/calib/realsense_camera54.npy')
+
+        for i in range(9):
+            _, _, pc2, _ = camera_2.get_next_frame()
+            _, _, pc5, _ = camera_5.get_next_frame()
+            pc2.transform(cam23_transform)
+            pc5.transform(cam54_transform)
+
+            # combine into single pointcloud
+            pcda.points.extend(pc2.points)
+            pcda.colors.extend(pc2.colors)
+            pcdb.points.extend(pc5.points)
+            pcdb.colors.extend(pc5.colors)
+
     # collect addition point clouds to combine
     for i in range(9):
         _, _, pca, _ = camera_a.get_next_frame()
@@ -169,11 +189,11 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001):
     np.save("live_registration/13Dec2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
 
 if __name__ == "__main__":
-    cama = 2
-    camb = 3
+    cama = 3
+    camb = 4
 
     # if there are no arrays for camera numbers in /cam_centers folder
     # _ = find_center_in_cam_frame(5)
 
     # calibrate the two cameras
-    align_two_cameras(cama, camb, voxel_size=0.015, distance_threshold=0.001)
+    align_two_cameras(cama, camb, voxel_size=0.025, distance_threshold=0.001)

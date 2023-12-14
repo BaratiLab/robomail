@@ -165,11 +165,11 @@ def align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, kee
     np.save("live_registration/13Dec2023/transform_cam" + str(cama) + "_to_cam" + str(camb) + ".npy", cama_to_camb)
 
 if __name__ == "__main__":
-    cama = 2
-    camb = 3
+    cama = 3
+    camb = 4
 
     # if there are no arrays for camera numbers in /cam_centers folder
     # _ = find_center_in_cam_frame(5)
 
     # calibrate the two cameras
-    align_two_cameras(cama, camb, voxel_size=0.01, distance_threshold=0.001, keep_background=True, after_ransac=False)
+    align_two_cameras(cama, camb, voxel_size=0.0075, distance_threshold=0.001, keep_background=False, after_ransac=False)

@@ -186,6 +186,7 @@ class Vision3D:
             nb_neighbors=20, std_ratio=2.0
         )
 
+        # print("1")
         # o3d.visualization.draw_geometries([pointcloud])
 
         # get shape of clay base
@@ -194,12 +195,13 @@ class Vision3D:
         downpdc_points = np.asarray(downpdc.points)
         # polygon_indices = np.where(downpdc_points[:,2] < 0.236) # PREVIOUS BEFORE 8/29
         # polygon_indices = np.where(downpdc_points[:, 2] < 0.22) # PREVIOUS BEFORE 11/30
-        polygon_indices = np.where(downpdc_points[:, 2] < 0.242)
+        polygon_indices = np.where(downpdc_points[:, 2] < 0.24) # 0.242
 
         # polygon_indices = np.where(downpdc_points[:,2] < 0.234)
         polygon_pcl = o3d.geometry.PointCloud()
         polygon_pcl.points = o3d.utility.Vector3dVector(downpdc_points[polygon_indices])
 
+        # print("2")
         # o3d.visualization.draw_geometries([polygon_pcl])
 
         # generate a 2d grid of points for the base
@@ -223,6 +225,9 @@ class Vision3D:
 
         grid_cloud = o3d.geometry.PointCloud()
         grid_cloud.points = o3d.utility.Vector3dVector(points)
+
+        # print("3")
+        # o3d.visualization.draw_geometries([grid_cloud])
 
         # crop shape of clay base out of 2d grid of points
         polygon_coords = np.asarray(polygon_pcl.points)[:, 0:2]
@@ -249,6 +254,9 @@ class Vision3D:
         base_cloud.colors = o3d.utility.Vector3dVector(
             np.tile(np.array([0, 0, 1]), (len(base_cloud.points), 1))
         )
+
+        # print("4")
+        # o3d.visualization.draw_geometries([base_cloud])
 
         # uniformly sample 2048 points from each point cloud
         points = np.asarray(base_cloud.points)
