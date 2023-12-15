@@ -1,5 +1,6 @@
 import open3d as o3d
 import copy
+import time
 import numpy as np
 import numpy.typing as npt
 from .cam_utils import get_cam_info
@@ -135,6 +136,67 @@ class Vision3D:
 
         return pcd
     
+    def no_base_plane_unnormalize_point_cloud_fusal(self, pc2, pc3, pc4, pc5):
+        """
+        Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
+        Franka workspace into world coordinate frame, performs background
+        and color cropping.
+
+        Args:
+        pc2 (o3d.geometry.PointCloud): point cloud from camera 2
+        pc3 (o3d.geometry.PointCloud): point cloud from camera 3
+        pc4 (o3d.geometry.PointCloud): point cloud from camera 4
+        pc5 (o3d.geometry.PointCloud): point cloud from camera 5
+        vis (bool): if True, will display final results (default False)
+
+        Returns:
+        unscaled, unnormalized cloud (o3d.geometry.PointCloud): stitched cloud no base plane 
+        for faster computation
+        """
+        # transform each cloud to world frame
+        pc2.transform(self.camera_transforms[2])
+        pc3.transform(self.camera_transforms[3])
+        pc4.transform(self.camera_transforms[4])
+        pc5.transform(self.camera_transforms[5])
+
+        # combine the point clouds
+        pointcloud = o3d.geometry.PointCloud()
+        pointcloud.points = pc5.points
+        pointcloud.colors = pc5.colors
+        pointcloud.points.extend(pc2.points)
+        pointcloud.colors.extend(pc2.colors)
+        pointcloud.points.extend(pc3.points)
+        pointcloud.colors.extend(pc3.colors)
+        pointcloud.points.extend(pc4.points)
+        pointcloud.colors.extend(pc4.colors)
+
+        # crop point cloud
+        pointcloud, ind = pointcloud.remove_statistical_outlier(
+            nb_neighbors=20, std_ratio=2.0
+        )  # remove statistical outliers
+        pointcloud = self.remove_stage_grippers(pointcloud)
+        pointcloud = self.remove_background(
+            pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
+        )
+
+        # color thresholding
+        pointcloud = self.lab_color_crop(pointcloud)
+        pointcloud, ind = pointcloud.remove_statistical_outlier(
+            nb_neighbors=20, std_ratio=2.0
+        )
+
+        pointcloud.colors = o3d.utility.Vector3dVector(
+            np.tile(np.array([0, 0, 1]), (len(pointcloud.points), 1))
+        )
+
+        # uniformly sample 2048 points from each point cloud
+        points = np.asarray(pointcloud.points)
+        idxs = np.random.randint(0, len(points), size=2048)
+        points = points[idxs]
+
+        pc_center = pointcloud.get_center() 
+        return points, pc_center
+    
     def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
@@ -152,6 +214,7 @@ class Vision3D:
         Returns:
         unscaled, unnormalized cloud (o3d.geometry.PointCloud): stitched cloud
         """
+        # start = time.time()
         # transform each cloud to world frame
         pc2.transform(self.camera_transforms[2])
         pc3.transform(self.camera_transforms[3])
