@@ -46,48 +46,53 @@ def get_cam_info(cam_number, alternate_path=None):
     # dictionary of camera extrinsics
     camera_extrinsics = {
         1: path + "/realsense_ee.tf",
-        2: path + "/realsense_camera23.npy",
-        3: path + "/realsense_camera34.npy",
+        2: path + "/realsense_camera2w.npy",
+        3: path + "/realsense_camera3w.npy",
         4: path + "/realsense_camera4w.npy",
-        5: path + "/realsense_camera54.npy"
+        5: path + "/realsense_camera5w.npy"
     }
+    # camera_extrinsics = {
+    #     1: path + "/realsense_ee.tf",
+    #     2: path + "/realsense_camera23.npy",
+    #     3: path + "/realsense_camera34.npy",
+    #     4: path + "/realsense_camera4w.npy",
+    #     5: path + "/realsense_camera54.npy"
+    # }
 
     # import camera intrinsics and extrinsics
     REALSENSE_INTRINSICS = camera_intrinsics[cam_number]
+    realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
     
     # combine camera extrinsics to get the camera to world transform (transform order ABC --> multiply transforms CBA)
     if cam_number == 1:
-        # only import 1 
         REALSENSE_TF = camera_extrinsics[cam_number]
         realsense_extrinsics = rigid_transform_to_numpy(RigidTransform.load(REALSENSE_TF))#.matrix()
-        realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
-
-    elif cam_number == 4:
-        # only import 4
-        realsense_extrinsics = np.load(camera_extrinsics[cam_number])
-        realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
-
-    elif cam_number == 2:
-        # import 23 / 34/ 4w
-        realsense_23 = np.load(camera_extrinsics[cam_number])
-        realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
-        realsense_34 = np.load(camera_extrinsics[3])
-        realsense_4w = np.load(camera_extrinsics[4])
-        realsense_extrinsics = realsense_4w @ realsense_34 @ realsense_23 
-         
-    elif cam_number == 3:
-        # import 34/ 4w
-        realsense_34 = np.load(camera_extrinsics[cam_number])
-        realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
-        realsense_4w = np.load(camera_extrinsics[4])
-        realsense_extrinsics = realsense_4w @ realsense_34 
-
     else:
-        # import 54/ 4w
-        realsense_54 = np.load(camera_extrinsics[cam_number])
-        realsense_intrinsics = CameraIntrinsics.load(REALSENSE_INTRINSICS)
-        realsense_4w = np.load(camera_extrinsics[4])
-        realsense_extrinsics = realsense_4w @ realsense_54 
+        realsense_extrinsics = np.load(camera_extrinsics[cam_number])
+
+    # # NOTE THIS IS OLD CODE FOR PREVIOUS CAMERA CONFIGURATION [WILL DELETE ONCE CONFIRM NEW SYSTEM FUNCTIONING]
+    # elif cam_number == 4:
+    #     # only import 4
+    #     realsense_extrinsics = np.load(camera_extrinsics[cam_number])
+
+    # elif cam_number == 2:
+    #     # import 23 / 34/ 4w
+    #     realsense_23 = np.load(camera_extrinsics[cam_number])
+    #     realsense_34 = np.load(camera_extrinsics[3])
+    #     realsense_4w = np.load(camera_extrinsics[4])
+    #     realsense_extrinsics = realsense_4w @ realsense_34 @ realsense_23 
+         
+    # elif cam_number == 3:
+    #     # import 34/ 4w
+    #     realsense_34 = np.load(camera_extrinsics[cam_number])
+    #     realsense_4w = np.load(camera_extrinsics[4])
+    #     realsense_extrinsics = realsense_4w @ realsense_34 
+
+    # else:
+    #     # import 54/ 4w
+    #     realsense_54 = np.load(camera_extrinsics[cam_number])
+    #     realsense_4w = np.load(camera_extrinsics[4])
+    #     realsense_extrinsics = realsense_4w @ realsense_54 
 
     # get the camera serial number
     cam_serial = camera_serials[cam_number]
