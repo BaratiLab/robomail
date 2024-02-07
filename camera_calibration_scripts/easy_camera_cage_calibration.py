@@ -78,7 +78,7 @@ def generate_all_camera_transforms(cam2_translation,
     '''
     if correct_offsets:
         cam3_translation += np.array([0.0, -0.0395, 0.017])
-        cam4_translation += np.array([0.07, -0.027, 0.0])
+        cam4_translation += np.array([0.07, -0.0615, 0.0])
         cam5_translation += np.array([0.05, 0.0, 0.027])
 
     cam2_transform = generate_camera_extrinsic(cam2_translation, cam2_rotation, pos_y_side=False)
