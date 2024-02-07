@@ -43,11 +43,13 @@ def generate_camera_extrinsic(cam_translation,
     trans_swap_yz[2, 1] = 1
     trans_swap_yz[2, 2] = 0
 
-    # create a transformation matrix that flips the sign of the z-axis
+    # create a transformation matrix that flips the sign of the z-axis and adjusts for 0.1 offset
     trans_flip_zsign = np.identity(4)
     trans_flip_zsign[2, 2] = -1
+    trans_flip_zsign[:3, 3] = np.array([0, 0, 0.1])
 
     cam_to_world = trans_flip_zsign @ trans_swap_yz @ y_shift_trans @ cam_transform
+    # cam_to_world = trans_swap_yz @ y_shift_trans @ cam_transform
     return cam_to_world 
 
 def generate_all_camera_transforms(cam2_translation,
@@ -78,8 +80,10 @@ def generate_all_camera_transforms(cam2_translation,
     '''
     if correct_offsets:
         cam3_translation += np.array([0.0, -0.0395, 0.017])
-        cam4_translation += np.array([0.07, -0.0515, 0.0]) # -0.0615
-        cam5_translation += np.array([0.05, 0.0, 0.027])
+        # cam4_translation += np.array([0.07, -0.0395, 0.0]) # -0.0515, -0.0615, -0.0425
+        # cam5_translation += np.array([0.05, 0.0, 0.027]) # 0.05,
+        cam4_translation += np.array([0.07, -0.0615, 0.0]) # -0.0515, -0.0615, -0.0425
+        cam5_translation += np.array([0.05, -0.027, 0.0]) # 0.05,
 
     cam2_transform = generate_camera_extrinsic(cam2_translation, cam2_rotation, pos_y_side=False)
     cam3_transform = generate_camera_extrinsic(cam3_translation, cam3_rotation, pos_y_side=False)
@@ -114,11 +118,11 @@ if __name__ == "__main__":
                                                                                                     correct_offsets=True)
     
     # verify the transformation matrices by visualizing scene
-    pcl_path = 'Calibration_Data/raw_pcls/'
-    pcl2 = o3d.io.read_point_cloud(pcl_path + 'cam2.ply')
-    pcl3 = o3d.io.read_point_cloud(pcl_path + 'cam3.ply')
-    pcl4 = o3d.io.read_point_cloud(pcl_path + 'cam4.ply')
-    pcl5 = o3d.io.read_point_cloud(pcl_path + 'cam5.ply')
+    pcl_path = '/home/alison/pointclouds/' # 'Calibration_Data/raw_pcls/'
+    pcl2 = o3d.io.read_point_cloud(pcl_path + 'pc2.ply')
+    pcl3 = o3d.io.read_point_cloud(pcl_path + 'pc3.ply')
+    pcl4 = o3d.io.read_point_cloud(pcl_path + 'pc4.ply')
+    pcl5 = o3d.io.read_point_cloud(pcl_path + 'pc5.ply')
 
     pcl2.transform(cam2_transform)
     pcl3.transform(cam3_transform)

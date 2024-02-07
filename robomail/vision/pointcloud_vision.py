@@ -73,15 +73,15 @@ class Vision3D:
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
 
-        ind_z_upper = np.where(points[:, 2] > 0.207)
+        ind_z_upper = np.where(points[:, 2] > 0.065)# > 0.207)
         pcd.points = o3d.utility.Vector3dVector(points[ind_z_upper])
         pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_upper])
 
-        points = np.asarray(pcd.points)
-        colors = np.asarray(pcd.colors)
-        ind_z_lower = np.where(points[:, 2] < 0.27)
-        pcd.points = o3d.utility.Vector3dVector(points[ind_z_lower])
-        pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_lower])
+        # points = np.asarray(pcd.points)
+        # colors = np.asarray(pcd.colors)
+        # ind_z_lower = np.where(points[:, 2] < 0.15)# < 0.27)
+        # pcd.points = o3d.utility.Vector3dVector(points[ind_z_lower])
+        # pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_lower])
 
         return pcd
 
@@ -278,9 +278,11 @@ class Vision3D:
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
         )  # remove statistical outliers
+        # o3d.visualization.draw_geometries([pointcloud])
         pointcloud = self.remove_stage_grippers(pointcloud)
+        # o3d.visualization.draw_geometries([pointcloud])
         pointcloud = self.remove_background(
-            pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
+            pointcloud, radius=0.15, center=np.array([0.6, 0.0, 0.15])# np.array([0.6, -0.05, 0.3])
         )
 
         # print("test: ", np.asarray(pointcloud.points).shape)
@@ -305,9 +307,9 @@ class Vision3D:
       
         # polygon_indices = np.where(downpdc_points[:,2] < 0.236) # PREVIOUS BEFORE 8/29
         # polygon_indices = np.where(downpdc_points[:, 2] < 0.22) # PREVIOUS BEFORE 11/30
-        polygon_indices = np.where(downpdc_points[:, 2] < 0.24) # 0.242
+        # polygon_indices = np.where(downpdc_points[:, 2] < 0.24) # PREVIOUS BEFORE 2/7/24
 
-        # polygon_indices = np.where(downpdc_points[:,2] < 0.234)
+        polygon_indices = np.where(downpdc_points[:, 2] < 0.075) 
         polygon_pcl = o3d.geometry.PointCloud()
         polygon_pcl.points = o3d.utility.Vector3dVector(downpdc_points[polygon_indices])
 
@@ -326,7 +328,7 @@ class Vision3D:
         )  # create grid that covers full area of 2d polygon
         # z = 0.234 # height of the clay base
 
-        z = 0.23
+        z = 0.0675
         # print("\n\n\n\nMODIFIED!!!")
         # z = 0.21 # PREVIOUS BEFORE 11/30
         # z = 0.232 # PREVIOUS BEFORE 8/29
@@ -396,114 +398,6 @@ class Vision3D:
         rescaled_points (o3d.geometry.PointCloud): stitched and cropped final
         point cloud scaled up by 10
         """
-        # # transform each cloud to world frame
-        # pc2.transform(self.camera_transforms[2])
-        # pc3.transform(self.camera_transforms[3])
-        # pc4.transform(self.camera_transforms[4])
-        # pc5.transform(self.camera_transforms[5])
-
-        # # combine the point clouds
-        # pointcloud = o3d.geometry.PointCloud()
-        # pointcloud.points = pc5.points
-        # pointcloud.colors = pc5.colors
-        # pointcloud.points.extend(pc2.points)
-        # pointcloud.colors.extend(pc2.colors)
-        # pointcloud.points.extend(pc3.points)
-        # pointcloud.colors.extend(pc3.colors)
-        # pointcloud.points.extend(pc4.points)
-        # pointcloud.colors.extend(pc4.colors)
-
-        # # crop point cloud
-        # pointcloud, ind = pointcloud.remove_statistical_outlier(
-        #     nb_neighbors=20, std_ratio=2.0
-        # )  # remove statistical outliers
-        # pointcloud = self.remove_stage_grippers(pointcloud)
-        # pointcloud = self.remove_background(
-        #     pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
-        # )
-
-        # # o3d.visualization.draw_geometries([pointcloud])
-
-        # # color thresholding
-        # pointcloud = self.lab_color_crop(pointcloud)
-        # pointcloud, ind = pointcloud.remove_statistical_outlier(
-        #     nb_neighbors=20, std_ratio=2.0
-        # )
-
-        # # o3d.visualization.draw_geometries([pointcloud])
-
-        # # get shape of clay base
-        # pointcloud.estimate_normals()
-        # downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
-        # downpdc_points = np.asarray(downpdc.points)
-        # # polygon_indices = np.where(downpdc_points[:,2] < 0.236) # PREVIOUS BEFORE 8/29
-        # # polygon_indices = np.where(downpdc_points[:, 2] < 0.22) # PREVIOUS BEFORE 11/30
-        # polygon_indices = np.where(downpdc_points[:, 2] < 0.242)
-
-        # # polygon_indices = np.where(downpdc_points[:,2] < 0.234)
-        # polygon_pcl = o3d.geometry.PointCloud()
-        # polygon_pcl.points = o3d.utility.Vector3dVector(downpdc_points[polygon_indices])
-
-        # # o3d.visualization.draw_geometries([polygon_pcl])
-
-        # # generate a 2d grid of points for the base
-        # base_plane = []
-        # minx, maxx = np.amin(downpdc_points[:, 0]), np.amax(downpdc_points[:, 0])
-        # miny, maxy = np.amin(downpdc_points[:, 1]), np.amax(downpdc_points[:, 1])
-        # minz, maxz = np.amin(downpdc_points[:, 2]), np.amax(downpdc_points[:, 2])
-        # x_vals = np.linspace(minx, maxx, 50)
-        # y_vals = np.linspace(miny, maxy, 50)
-        # xx, yy = np.meshgrid(
-        #     x_vals, y_vals
-        # )  # create grid that covers full area of 2d polygon
-        # # z = 0.234 # height of the clay base
-
-        # z = 0.23
-        # # print("\n\n\n\nMODIFIED!!!")
-        # # z = 0.21 # PREVIOUS BEFORE 11/30
-        # # z = 0.232 # PREVIOUS BEFORE 8/29
-        # zz = np.ones(len(xx.flatten())) * z
-        # points = np.vstack((xx.flatten(), yy.flatten(), zz)).T
-
-        # grid_cloud = o3d.geometry.PointCloud()
-        # grid_cloud.points = o3d.utility.Vector3dVector(points)
-
-        # # crop shape of clay base out of 2d grid of points
-        # polygon_coords = np.asarray(polygon_pcl.points)[:, 0:2]
-        # polygon = Polygon(polygon_coords)
-        # mask = [
-        #     polygon.contains(Point(x, y))
-        #     for x, y in np.asarray(grid_cloud.points)[:, 0:2]
-        # ]
-        # cropped_grid = np.asarray(grid_cloud.points)[:, 0:2][mask]
-        # zs = np.ones(len(cropped_grid)) * z
-        # cropped_grid = np.concatenate(
-        #     (cropped_grid, np.expand_dims(zs, axis=1)), axis=1
-        # )
-
-        # base_cloud = o3d.geometry.PointCloud()
-        # base_cloud.points = o3d.utility.Vector3dVector(cropped_grid)
-
-        # # add top part of clay to new base
-        # base_cloud.points.extend(downpdc.points)
-        # cropped_plane, ind = base_cloud.remove_statistical_outlier(
-        #     nb_neighbors=20, std_ratio=2.0
-        # )
-
-        # base_cloud.colors = o3d.utility.Vector3dVector(
-        #     np.tile(np.array([0, 0, 1]), (len(base_cloud.points), 1))
-        # )
-
-        # # uniformly sample 2048 points from each point cloud
-        # points = np.asarray(base_cloud.points)
-        # idxs = np.random.randint(0, len(points), size=2048)
-        # points = points[idxs]
-
-        # # re-process the processed_pcl to center
-        # # pc_center = np.array([0.6, 0.0, 0.24])
-        # pc_center = base_cloud.get_center() 
-        # centered_points = points - pc_center
-        
         points, pc_center = self.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5, no_transformation)
         centered_points = points - pc_center
         scale = 10

@@ -18,9 +18,14 @@ _, _, pc3, _ = cam3.get_next_frame()
 _, _, pc4, _ = cam4.get_next_frame()
 _, _, pc5, _ = cam5.get_next_frame()
 
-scaled_pcl = pcl_vis.fuse_point_clouds(pc2, pc3, pc4, pc5)
+# scaled_pcl = pcl_vis.fuse_point_clouds(pc2, pc3, pc4, pc5)
+scaled_pcl, center = pcl_vis.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5)
 
 # visualize the returned scaled point cloud
 pointcloud = o3d.geometry.PointCloud()
 pointcloud.points = o3d.utility.Vector3dVector(scaled_pcl)
 pointcloud.colors = o3d.utility.Vector3dVector(np.tile(np.array([0,0,1]), (len(scaled_pcl),1)))
+o3d.visualization.draw_geometries([pointcloud])
+
+# center position
+print("center position of clay: ", np.mean(pointcloud.points, axis=0))
