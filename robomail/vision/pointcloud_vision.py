@@ -10,13 +10,17 @@ from shapely.geometry import Point, Polygon
 
 
 class Vision3D:
-    def __init__(self):
+    def __init__(self, transform_list=[]):
         # save a dictionary of the camera transforms (should be from each static camera to world frame)
         self.camera_transforms = {}
-        for i in range(2, 6):
-            _, transform, _ = get_cam_info(i)
-            self.camera_transforms[i] = transform  # .matrix()
-            # _, self.camera_transforms[i], _ = get_cam_info(i)
+        if len(transform_list) > 0:
+            for i, transform in enumerate(transform_list):
+                self.camera_transforms[i + 2] = transform
+        else:
+            for i in range(2, 6):
+                _, transform, _ = get_cam_info(i)
+                self.camera_transforms[i] = transform  # .matrix()
+                # _, self.camera_transforms[i], _ = get_cam_info(i)
 
     def plot_target_and_state_clouds(self, state, target):
         """
@@ -196,8 +200,41 @@ class Vision3D:
 
         pc_center = pointcloud.get_center() 
         return points, pc_center
+
+    def get_point_cloud_elevated_stage(self, pc2, pc3, pc4, pc5, no_transformation=False):
+        if not no_transformation:
+            # transform each cloud to world frame
+            pc2.transform(self.camera_transforms[2])
+            pc3.transform(self.camera_transforms[3])
+            pc4.transform(self.camera_transforms[4])
+            pc5.transform(self.camera_transforms[5])
+
+        # combine the point clouds
+        pointcloud = o3d.geometry.PointCloud()
+        pointcloud.points = pc5.points
+        pointcloud.colors = pc5.colors
+        pointcloud.points.extend(pc2.points)
+        pointcloud.colors.extend(pc2.colors)
+        pointcloud.points.extend(pc3.points)
+        pointcloud.colors.extend(pc3.colors)
+        pointcloud.points.extend(pc4.points)
+        pointcloud.colors.extend(pc4.colors)
+
+        # o3d.visualization.draw_geometries([pointcloud])
+
+        # print("test: ", np.asarray(pointcloud.points).shape)
+
+        # crop point cloud
+        pointcloud, ind = pointcloud.remove_statistical_outlier(
+            nb_neighbors=20, std_ratio=2.0
+        )  # remove statistical outliers
+        pointcloud = self.remove_stage_grippers(pointcloud)
+        pointcloud = self.remove_background(
+            pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
+        )
+        return pointcloud
     
-    def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5):
+    def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5, no_transformation=False):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
         Franka workspace into world coordinate frame, performs background
@@ -215,11 +252,12 @@ class Vision3D:
         unscaled, unnormalized cloud (o3d.geometry.PointCloud): stitched cloud
         """
         # start = time.time()
-        # transform each cloud to world frame
-        pc2.transform(self.camera_transforms[2])
-        pc3.transform(self.camera_transforms[3])
-        pc4.transform(self.camera_transforms[4])
-        pc5.transform(self.camera_transforms[5])
+        if not no_transformation:
+            # transform each cloud to world frame
+            pc2.transform(self.camera_transforms[2])
+            pc3.transform(self.camera_transforms[3])
+            pc4.transform(self.camera_transforms[4])
+            pc5.transform(self.camera_transforms[5])
 
         # combine the point clouds
         pointcloud = o3d.geometry.PointCloud()
@@ -232,6 +270,10 @@ class Vision3D:
         pointcloud.points.extend(pc4.points)
         pointcloud.colors.extend(pc4.colors)
 
+        # o3d.visualization.draw_geometries([pointcloud])
+
+        # print("test: ", np.asarray(pointcloud.points).shape)
+
         # crop point cloud
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
@@ -241,6 +283,8 @@ class Vision3D:
             pointcloud, radius=0.15, center=np.array([0.6, -0.05, 0.3])
         )
 
+        # print("test: ", np.asarray(pointcloud.points).shape)
+
         # o3d.visualization.draw_geometries([pointcloud])
 
         # color thresholding
@@ -249,6 +293,8 @@ class Vision3D:
             nb_neighbors=20, std_ratio=2.0
         )
 
+        # print("test: ", np.asarray(pointcloud.points).shape)
+
         # print("1")
         # o3d.visualization.draw_geometries([pointcloud])
 
@@ -256,6 +302,7 @@ class Vision3D:
         pointcloud.estimate_normals()
         downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
         downpdc_points = np.asarray(downpdc.points)
+      
         # polygon_indices = np.where(downpdc_points[:,2] < 0.236) # PREVIOUS BEFORE 8/29
         # polygon_indices = np.where(downpdc_points[:, 2] < 0.22) # PREVIOUS BEFORE 11/30
         polygon_indices = np.where(downpdc_points[:, 2] < 0.24) # 0.242
@@ -331,7 +378,7 @@ class Vision3D:
         pc_center = base_cloud.get_center() 
         return points, pc_center
 
-    def fuse_point_clouds(self, pc2, pc3, pc4, pc5, vis=False):
+    def fuse_point_clouds(self, pc2, pc3, pc4, pc5, vis=False, no_transformation=False):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
         Franka workspace into world coordinate frame, performs background
@@ -457,7 +504,7 @@ class Vision3D:
         # pc_center = base_cloud.get_center() 
         # centered_points = points - pc_center
         
-        points, pc_center = self.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5)
+        points, pc_center = self.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5, no_transformation)
         centered_points = points - pc_center
         scale = 10
         rescaled_points = scale * centered_points
