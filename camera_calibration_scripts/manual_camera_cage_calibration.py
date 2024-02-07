@@ -21,7 +21,7 @@ cam3_rotation = Rotation.from_euler('zxy', np.array([0.0, -40.0, -30.0]), degree
 # cam4_translation = np.array([78, 41.75, 45])
 # cam4_rotation_euler = np.array([40.0, 0.0, 30.0])
 # cam4_translation = np.array([-41.75, -45, -78])
-cam4_translation = np.array([0.85, 0.45, 0.356])
+cam4_translation = np.array([0.85, 0.45, 0.366])
 cam4_rotation = Rotation.from_euler('zxy', np.array([0.0, -40.0, 180+30.0]), degrees=True).as_matrix()
 
 # cam5_translation = np.array([22, 41.75, 45])
