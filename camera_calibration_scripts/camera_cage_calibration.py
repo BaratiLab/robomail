@@ -92,25 +92,81 @@ cam5_pcl.transform(cam5_transform)
 # cam5_pcl.transform(flip_transform)
 
 # visualize the point clouds after transformation
-# o3d.visualization.draw_geometries([cam2_pcl, cam3_pcl]) #, cam4_pcl, cam5_pcl])
-# o3d.visualization.draw_geometries([cam4_pcl, cam5_pcl])
 o3d.visualization.draw_geometries([cam2_pcl, cam3_pcl, cam4_pcl, cam5_pcl])
 
-# get the mean values of cam2 and cam3 point clouds
+# get the mean values of all camera point clouds
 cam2_pcl_points = np.asarray(cam2_pcl.points)
 cam3_pcl_points = np.asarray(cam3_pcl.points)
+cam4_pcl_points = np.asarray(cam4_pcl.points)
+cam5_pcl_points = np.asarray(cam5_pcl.points)
 cam2_pcl_mean = np.mean(cam2_pcl_points, axis=0)
 cam3_pcl_mean = np.mean(cam3_pcl_points, axis=0)
-print("\nDiff: ", cam3_pcl_mean - cam2_pcl_mean)
+cam4_pcl_mean = np.mean(cam4_pcl_points, axis=0)
+cam5_pcl_mean = np.mean(cam5_pcl_points, axis=0)
+# print("\nMean cam2: ", cam2_pcl_mean)
+# print("Mean cam3: ", cam3_pcl_mean)
+# print("Mean cam4: ", cam4_pcl_mean)
+# print("Mean cam5: ", cam5_pcl_mean)
 
-# # get the mean z of cam2_pcl
-# cam2_pcl_points = np.asarray(cam2_pcl.points)
-# cam2_pcl_z = cam2_pcl_points[:, 2]
-# cam2_pcl_z_mean = np.mean(cam2_pcl_z)
+# create a combined point cloud with all the camera points
+pointcloud = o3d.geometry.PointCloud()
+pointcloud.points = cam2_pcl.points
+pointcloud.points.extend(cam3_pcl.points)
+pointcloud.points.extend(cam4_pcl.points)
+pointcloud.points.extend(cam5_pcl.points)
+o3d.visualization.draw_geometries([pointcloud])
 
-# # visualize a point cloud of all points with z > cam2_pcl_z_mean
-# cam2_pcl_z_filtered = cam2_pcl_points[cam2_pcl_z > cam2_pcl_z_mean]
-# cam2_pcl_z_filtered_pcl = o3d.geometry.PointCloud()
-# cam2_pcl_z_filtered_pcl.points = o3d.utility.Vector3dVector(cam2_pcl_z_filtered)
-# o3d.visualization.draw_geometries([cam2_pcl_z_filtered_pcl])
-# # NOTE: CURRENTLY Z-AXIS IS MISALIGNED
+# remove the background from the combined point cloud
+full_points = np.asarray(pointcloud.points)
+full_points = full_points[full_points[:, 0] > 0.0]
+full_points = full_points[full_points[:, 1] > 0.8]
+full_points = full_points[full_points[:, 2] > -0.2]
+full_points = full_points[full_points[:, 2] < 0.2]
+
+# adjust the z for calibration offset error
+# TODO: CONVERT THIS SHIFT INTO A TRANSFORMATION MATRIX
+# full_points[:, 1] = full_points[:, 1] - 0.8 * np.ones(len(full_points))
+y_shift_trans = np.identity(4)
+y_shift_trans[1, 3] = -0.8
+cropped_pointcloud = o3d.geometry.PointCloud()
+cropped_pointcloud.points = o3d.utility.Vector3dVector(full_points)
+cropped_pointcloud.transform(y_shift_trans)
+o3d.visualization.draw_geometries([cropped_pointcloud])
+
+# get the min/max/mean of the cropped point cloud
+min = np.min(full_points, axis=0)
+max = np.max(full_points, axis=0)
+mean = np.mean(full_points, axis=0)
+print("\nMin: ", min)
+print("Max: ", max)
+print("Mean: ", mean)
+
+
+# TODO: swap the y and z axes of the point cloud with a transformation matrix
+transformation = np.identity(4)
+transformation[1, 1] = 0
+transformation[1, 2] = 1
+transformation[2, 1] = 1
+transformation[2, 2] = 0
+cropped_pointcloud.transform(transformation)
+# o3d.visualization.draw_geometries([cropped_pointcloud])
+# new_points = np.asarray(cropped_pointcloud.points)
+# min = np.min(new_points, axis=0)
+# max = np.max(new_points, axis=0)
+# mean = np.mean(new_points, axis=0)
+# print("\nMin: ", min)
+# print("Max: ", max)
+# print("Mean: ", mean)
+
+# create a transformation matrix that flips the sign of the z-axis
+trans = np.identity(4)
+trans[2, 2] = -1
+cropped_pointcloud.transform(trans)
+o3d.visualization.draw_geometries([cropped_pointcloud])
+new_points = np.asarray(cropped_pointcloud.points)
+min = np.min(new_points, axis=0)
+max = np.max(new_points, axis=0)
+mean = np.mean(new_points, axis=0)
+print("\nMin: ", min)
+print("Max: ", max)
+print("Mean: ", mean)
