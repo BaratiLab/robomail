@@ -27,6 +27,7 @@ def get_cam_info(cam_number, alternate_path=None):
         3: '151322069488',
         4: '151322061880',
         5: '151322066932',
+        6: '152522250441'
     }
 
     if alternate_path:
@@ -40,7 +41,8 @@ def get_cam_info(cam_number, alternate_path=None):
         2: path + "/realsense_intrinsics_camera2.intr",
         3: path + "/realsense_intrinsics_camera2.intr",
         4: path + "/realsense_intrinsics_camera4.intr",
-        5: path + "/realsense_intrinsics_camera5.intr"
+        5: path + "/realsense_intrinsics_camera5.intr",
+        6: path + "/realsense_intrinsics_camera6.intr" # TODO: get camera 6 intrinsics
     }
 
     # dictionary of camera extrinsics
@@ -49,7 +51,8 @@ def get_cam_info(cam_number, alternate_path=None):
         2: path + "/realsense_camera2w.npy",
         3: path + "/realsense_camera3w.npy",
         4: path + "/realsense_camera4w.npy",
-        5: path + "/realsense_camera5w.npy"
+        5: path + "/realsense_camera5w.npy",
+        6: path + "/realsense_camera5w.npy" # TODO: get camera 6 intrinsics
     }
     # camera_extrinsics = {
     #     1: path + "/realsense_ee.tf",
