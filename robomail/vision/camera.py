@@ -59,6 +59,9 @@ class CameraClass():
         warnings.warn("DEPRECATED: use get_cam_serial()")
         return self.get_cam_serial()
     
+    def stop_pipeline(self):
+        self.pipeline.stop()
+    
     def get_next_frame(self, get_point_cloud=True, get_verts=True):
         """
         Returns the color image, depth image, point cloud and verts of the next frame.
