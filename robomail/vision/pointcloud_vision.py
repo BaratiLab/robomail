@@ -111,7 +111,7 @@ class Vision3D:
 
         return pcd
 
-    def lab_color_crop(self, pcd_incoming):
+    def lab_color_crop(self, pcd_incoming, color='Green'):
         """
         Removes points from input point cloud based on color in LAB color space
         (currently thresholds for a green color)
@@ -129,9 +129,16 @@ class Vision3D:
         colors = np.asarray(pcd.colors)
         lab_colors = rgb2lab(colors)  # covert colors to LAB color space
 
-        a_idx = np.where(lab_colors[:, 1] < -5)
-        l_idx = np.where(lab_colors[:, 0] > 0)
-        b_idx = np.where(lab_colors[:, 2] > -5)
+        if color == 'Green':
+            a_idx = np.where(lab_colors[:, 1] < -5)
+            l_idx = np.where(lab_colors[:, 0] > 0)
+            b_idx = np.where(lab_colors[:, 2] > -5)
+        elif color == 'Orange':
+            a_idx = np.where(lab_colors[:, 1] > -5)
+            l_idx = np.where(lab_colors[:, 0] > 0)
+            b_idx = np.where(lab_colors[:, 2] > 5)
+        else:
+            raise ValueError("Invalid color")
 
         indices = np.intersect1d(a_idx, np.intersect1d(l_idx, b_idx))
 
@@ -234,7 +241,7 @@ class Vision3D:
         )
         return pointcloud
     
-    def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5, no_transformation=False):
+    def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5, no_transformation=False, color='Green'):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
         Franka workspace into world coordinate frame, performs background
@@ -290,7 +297,7 @@ class Vision3D:
         # o3d.visualization.draw_geometries([pointcloud])
 
         # color thresholding
-        pointcloud = self.lab_color_crop(pointcloud)
+        pointcloud = self.lab_color_crop(pointcloud, color)
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
         )
