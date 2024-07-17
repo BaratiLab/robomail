@@ -70,18 +70,19 @@ class Vision3D:
         Returns:
         pcd (o3d.geometry.PointCloud): output point cloud with clay stage and grippers removed
         """
+        # removing the elevated stage
         points = np.asarray(pcd.points)
         colors = np.asarray(pcd.colors)
-
         ind_z_upper = np.where(points[:, 2] > 0.065)# > 0.207)
         pcd.points = o3d.utility.Vector3dVector(points[ind_z_upper])
         pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_upper])
 
-        # points = np.asarray(pcd.points)
-        # colors = np.asarray(pcd.colors)
-        # ind_z_lower = np.where(points[:, 2] < 0.15)# < 0.27)
-        # pcd.points = o3d.utility.Vector3dVector(points[ind_z_lower])
-        # pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_lower])
+        # removing the grippers
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors)
+        ind_z_lower = np.where(points[:, 2] < 0.2)
+        pcd.points = o3d.utility.Vector3dVector(points[ind_z_lower])
+        pcd.colors = o3d.utility.Vector3dVector(colors[ind_z_lower])
 
         return pcd
 
