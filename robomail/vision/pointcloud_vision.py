@@ -134,9 +134,9 @@ class Vision3D:
             l_idx = np.where(lab_colors[:, 0] > 0)
             b_idx = np.where(lab_colors[:, 2] > -5)
         elif color == 'Orange':
-            a_idx = np.where(lab_colors[:, 1] > -5)
-            l_idx = np.where(lab_colors[:, 0] > 0)
-            b_idx = np.where(lab_colors[:, 2] > 5)
+            a_idx = (np.where(lab_colors[:, 1] > -45)) and (np.where(lab_colors[:,1] < 45)) # -5 # 0
+            l_idx = np.where(lab_colors[:, 0] > 0) # 0
+            b_idx = np.where(lab_colors[:, 2] < -5)
         else:
             raise ValueError("Invalid color")
 
@@ -298,9 +298,9 @@ class Vision3D:
 
         # color thresholding
         pointcloud = self.lab_color_crop(pointcloud, color)
-        pointcloud, ind = pointcloud.remove_statistical_outlier(
-            nb_neighbors=20, std_ratio=2.0
-        )
+        pointcloud, ind = pointcloud.remove_radius_outlier(
+            nb_points=20, radius=0.005
+        ) 
 
         # print("test: ", np.asarray(pointcloud.points).shape)
 

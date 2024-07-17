@@ -19,7 +19,7 @@ _, _, pc4, _ = cam4.get_next_frame()
 _, _, pc5, _ = cam5.get_next_frame()
 
 # scaled_pcl = pcl_vis.fuse_point_clouds(pc2, pc3, pc4, pc5)
-scaled_pcl, center = pcl_vis.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5)
+scaled_pcl, center = pcl_vis.unnormalize_fuse_point_clouds(pc2, pc3, pc4, pc5, color="Orange")
 
 # visualize the returned scaled point cloud
 pointcloud = o3d.geometry.PointCloud()
