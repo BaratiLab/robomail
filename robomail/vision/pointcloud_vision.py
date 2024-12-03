@@ -264,6 +264,7 @@ class Vision3D:
         pointcloud.points.extend(pc3.points)
         pointcloud.colors.extend(pc3.colors)
         pointcloud.points.extend(pc4.points)
+        pointcloud.points.extend(pc4.colors) 
 
         # visualize the point cloud
         o3d.visualization.draw_geometries([pointcloud])
@@ -296,7 +297,7 @@ class Vision3D:
 
         # visualize the point cloud
         o3d.visualization.draw_geometries([pointcloud])
-        
+
         return np.asarray(pointcloud.points)
     
     def get_clay(self, pc2, pc3, pc4, pc5, no_transformation=False, color='Green'):
