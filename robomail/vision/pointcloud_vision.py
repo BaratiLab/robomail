@@ -267,20 +267,40 @@ class Vision3D:
         pointcloud.points.extend(pc3.points)
         pointcloud.colors.extend(pc3.colors)
         pointcloud.points.extend(pc4.points)
+        pointcloud.points.extend(pc4.colors) 
+
+        # visualize the point cloud
+        o3d.visualization.draw_geometries([pointcloud])
 
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
         )  # remove statistical outliers
+
+        # visualize the point cloud
+        o3d.visualization.draw_geometries([pointcloud])
+
+
         pointcloud = self.remove_stage_grippers(pointcloud)
+
+        # visualize the point cloud
+        o3d.visualization.draw_geometries([pointcloud])
+
         pointcloud = self.remove_background(
             pointcloud, radius=0.15, center=np.array([0.6, 0.0, 0.15])# np.array([0.6, -0.05, 0.3])
         )
+
+        # visualize the point cloud
+        o3d.visualization.draw_geometries([pointcloud])
 
         # color thresholding
         pointcloud = self.lab_color_crop(pointcloud, color)
         pointcloud, ind = pointcloud.remove_radius_outlier(
             nb_points=20, radius=0.005
         ) 
+
+        # visualize the point cloud
+        o3d.visualization.draw_geometries([pointcloud])
+
         return np.asarray(pointcloud.points)
     
     def get_clay(self, pc2, pc3, pc4, pc5, no_transformation=False, color='Green'):
