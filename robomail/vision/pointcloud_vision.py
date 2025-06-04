@@ -17,7 +17,7 @@ class Vision3D:
             for i, transform in enumerate(transform_list):
                 self.camera_transforms[i + 2] = transform
         else:
-            for i in range(2, 6):
+            for i in range(1, 6):
                 _, transform, _ = get_cam_info(i)
                 self.camera_transforms[i] = transform  # .matrix()
                 # _, self.camera_transforms[i], _ = get_cam_info(i)
@@ -135,7 +135,10 @@ class Vision3D:
             l_idx = np.where(lab_colors[:, 0] > 0)
             b_idx = np.where(lab_colors[:, 2] > -5)
         elif color == 'Orange':
-            a_idx = (np.where(lab_colors[:, 1] > -45)) and (np.where(lab_colors[:,1] < 45)) # -5 # 0
+            # a_idx = (np.where(lab_colors[:, 1] > -45)) and (np.where(lab_colors[:,1] < 45)) # -5 # 0
+            # l_idx = np.where(lab_colors[:, 0] > 0) # 0
+            # b_idx = np.where(lab_colors[:, 2] < -5)
+            a_idx = (np.where(lab_colors[:, 1] > -45)) and (np.where(lab_colors[:,1] < 80)) # -5 # 0
             l_idx = np.where(lab_colors[:, 0] > 0) # 0
             b_idx = np.where(lab_colors[:, 2] < -5)
         else:
@@ -385,6 +388,133 @@ class Vision3D:
         pc_center = base_cloud.get_center() 
         return points, pc_center
     
+    def unnormalize_fuse_point_clouds_no_base_ee_cam(self, pc1, pc2, pc3, pc4, pc5, no_transformation=False, color="Orange", ee_pos=np.ones(3), ee_rot=np.zeros((3,3))):
+        if not no_transformation:
+            # get transform matrix from translation and rotation
+            pose_transform = np.eye(4)
+            pose_transform[:3,:3] = ee_rot
+            pose_transform[0:3,3] = ee_pos
+            # transform each cloud to world frame
+            # pc1.transform(pose_transform).transform(self.camera_transforms[1])
+            pc1.transform(self.camera_transforms[1]).transform(pose_transform)
+            # handle calibration offsets
+            pc1.translate((-0.05,-0.025,-0.01))
+            pc2.transform(self.camera_transforms[2])
+            pc3.transform(self.camera_transforms[3])
+            pc4.transform(self.camera_transforms[4])
+            pc5.transform(self.camera_transforms[5])
+
+        # combine the point clouds
+        pointcloud = o3d.geometry.PointCloud()
+        pointcloud.points = pc5.points
+        pointcloud.colors = pc5.colors
+        pointcloud.points.extend(pc1.points)
+        pointcloud.colors.extend(pc1.colors)
+        pointcloud.points.extend(pc2.points)
+        pointcloud.colors.extend(pc2.colors)
+        pointcloud.points.extend(pc3.points)
+        pointcloud.colors.extend(pc3.colors)
+        pointcloud.points.extend(pc4.points)
+        pointcloud.colors.extend(pc4.colors)
+
+        # crop point cloud
+        pointcloud, ind = pointcloud.remove_statistical_outlier(
+            nb_neighbors=20, std_ratio=2.0
+        )  # remove statistical outliers
+        o3d.visualization.draw_geometries([pointcloud])
+        pointcloud = self.remove_stage_grippers(pointcloud)
+        # o3d.visualization.draw_geometries([pointcloud])
+        pointcloud = self.remove_background(
+            pointcloud, radius=0.15, center=np.array([0.6, 0.0, 0.15])# np.array([0.6, -0.05, 0.3])
+        )
+        o3d.visualization.draw_geometries([pointcloud])
+
+        # color thresholding
+        pointcloud = self.lab_color_crop(pointcloud, color)
+        pointcloud, ind = pointcloud.remove_radius_outlier(
+            nb_points=20, radius=0.005
+        ) 
+        o3d.visualization.draw_geometries([pointcloud])
+
+
+        # get shape of clay base
+        pointcloud.estimate_normals()
+        downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
+        downpdc_points = np.asarray(downpdc.points)
+        o3d.visualization.draw_geometries([downpdc])
+
+        # uniformly sample 2048 points from each point cloud
+        points = np.asarray(downpdc.points)
+        idxs = np.random.randint(0, len(points), size=2048)
+        points = points[idxs]
+
+        # re-process the processed_pcl to center
+        # pc_center = np.array([0.6, 0.0, 0.24])
+        pc_center = downpdc.get_center() 
+        return points, pc_center
+
+    
+    def unnormalize_fuse_point_clouds_no_base(self, pc2, pc3, pc4, pc5, no_transformation=False, color='Green'):
+        # start = time.time()
+        if not no_transformation:
+            # transform each cloud to world frame
+            pc2.transform(self.camera_transforms[2])
+            pc3.transform(self.camera_transforms[3])
+            pc4.transform(self.camera_transforms[4])
+            pc5.transform(self.camera_transforms[5])
+
+        # combine the point clouds
+        pointcloud = o3d.geometry.PointCloud()
+        pointcloud.points = pc5.points
+        pointcloud.colors = pc5.colors
+        pointcloud.points.extend(pc2.points)
+        pointcloud.colors.extend(pc2.colors)
+        pointcloud.points.extend(pc3.points)
+        pointcloud.colors.extend(pc3.colors)
+        pointcloud.points.extend(pc4.points)
+        pointcloud.colors.extend(pc4.colors)
+
+        # crop point cloud
+        pointcloud, ind = pointcloud.remove_statistical_outlier(
+            nb_neighbors=20, std_ratio=2.0
+        )  # remove statistical outliers
+        # o3d.visualization.draw_geometries([pointcloud])
+        pointcloud = self.remove_stage_grippers(pointcloud)
+        # o3d.visualization.draw_geometries([pointcloud])
+        pointcloud = self.remove_background(
+            pointcloud, radius=0.15, center=np.array([0.6, 0.0, 0.15])# np.array([0.6, -0.05, 0.3])
+        )
+        # o3d.visualization.draw_geometries([pointcloud])
+
+        # color thresholding
+        pointcloud = self.lab_color_crop(pointcloud, color)
+        pointcloud, ind = pointcloud.remove_radius_outlier(
+            nb_points=20, radius=0.005
+        ) 
+        # o3d.visualization.draw_geometries([pointcloud])
+
+        # print("test: ", np.asarray(pointcloud.points).shape)
+
+        # print("1")
+        # o3d.visualization.draw_geometries([pointcloud])
+
+        # get shape of clay base
+        pointcloud.estimate_normals()
+        downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
+        downpdc_points = np.asarray(downpdc.points)
+        # o3d.visualization.draw_geometries([downpdc])
+
+        # uniformly sample 2048 points from each point cloud
+        points = np.asarray(downpdc.points)
+        idxs = np.random.randint(0, len(points), size=2048)
+        points = points[idxs]
+
+        # re-process the processed_pcl to center
+        # pc_center = np.array([0.6, 0.0, 0.24])
+        pc_center = downpdc.get_center() 
+        return points, pc_center# start = time.time()
+                                              
+    
     def unnormalize_fuse_point_clouds(self, pc2, pc3, pc4, pc5, no_transformation=False, color='Green'):
         """
         Stitches together 4 point clouds from cameras 2, 3, 4, and 5 in the
@@ -563,4 +693,16 @@ class Vision3D:
         if vis:
             o3d.visualization.draw_geometries([pointcloud])
 
+        return rescaled_points
+    
+    def scale_point_clouds(self, points, pc_center):
+        centered_points = points - pc_center
+        scale = 10
+        rescaled_points = scale * centered_points
+
+        pointcloud = o3d.geometry.PointCloud()
+        pointcloud.points = o3d.utility.Vector3dVector(rescaled_points)
+        pointcloud.colors = o3d.utility.Vector3dVector(
+            np.tile(np.array([0, 0, 1]), (len(rescaled_points), 1))
+        )
         return rescaled_points
