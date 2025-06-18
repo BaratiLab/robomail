@@ -418,7 +418,8 @@ class Vision3D:
             # pc1.transform(pose_transform).transform(self.camera_transforms[1])
             pc1.transform(self.camera_transforms[1]).transform(pose_transform)
             # handle calibration offsets
-            pc1.translate((-0.05,-0.025,-0.01))
+            # pc1.translate((-0.05,-0.025,-0.01))
+            pc1.translate((0.065,-0.005,-0.01)) # NOTE: this is the calibration offset for ee pose: [0.625, 0.000, 0.325] 
             pc2.transform(self.camera_transforms[2])
             pc3.transform(self.camera_transforms[3])
             pc4.transform(self.camera_transforms[4])
@@ -428,8 +429,6 @@ class Vision3D:
         pointcloud = o3d.geometry.PointCloud()
         pointcloud.points = pc5.points
         pointcloud.colors = pc5.colors
-        pointcloud.points.extend(pc1.points)
-        pointcloud.colors.extend(pc1.colors)
         pointcloud.points.extend(pc2.points)
         pointcloud.colors.extend(pc2.colors)
         pointcloud.points.extend(pc3.points)
@@ -437,31 +436,50 @@ class Vision3D:
         pointcloud.points.extend(pc4.points)
         pointcloud.colors.extend(pc4.colors)
 
+        # # remove the points in pointcloud that pertain to the top bit of z
+        # pts = np.asarray(pointcloud.points)
+        # colors = np.asarray(pointcloud.colors)
+        # ind_z_top = np.where(pts[:, 2] < 0.12)
+        # pointcloud.points = o3d.utility.Vector3dVector(pts[ind_z_top])
+        # pointcloud.colors = o3d.utility.Vector3dVector(colors[ind_z_top])
+
+        # TODO: have a dynamically changing script logic
+            # 1) isolate the 4x point cloud like normal
+            # 2) identify the max z and the min/max x and y of the point cloud
+            # 3) remove the top z centimeter of the point cloud
+            # 4) remove most of the points (severely downsample) in the center circle part of the point cloud (radius ~ 3cm?)
+            # 5) isolate the ee point cloud seperately
+            # 6) fuse the two point clouds together ---> test to ensure this works well with varying pottery situations 
+
+        # add in the pc1
+        pointcloud.points.extend(pc1.points)
+        pointcloud.colors.extend(pc1.colors)
+
         # crop point cloud
         pointcloud, ind = pointcloud.remove_statistical_outlier(
             nb_neighbors=20, std_ratio=2.0
         )  # remove statistical outliers
-        o3d.visualization.draw_geometries([pointcloud])
+        # o3d.visualization.draw_geometries([pointcloud])
         pointcloud = self.remove_stage_grippers(pointcloud)
         # o3d.visualization.draw_geometries([pointcloud])
         pointcloud = self.remove_background(
             pointcloud, radius=0.15, center=np.array([0.6, 0.0, 0.15])# np.array([0.6, -0.05, 0.3])
         )
-        o3d.visualization.draw_geometries([pointcloud])
+        # o3d.visualization.draw_geometries([pointcloud])
 
         # color thresholding
         pointcloud = self.lab_color_crop(pointcloud, color)
         pointcloud, ind = pointcloud.remove_radius_outlier(
             nb_points=20, radius=0.005
         ) 
-        o3d.visualization.draw_geometries([pointcloud])
+        # o3d.visualization.draw_geometries([pointcloud])
 
 
         # get shape of clay base
         pointcloud.estimate_normals()
         downpdc = pointcloud.voxel_down_sample(voxel_size=0.0025)
         downpdc_points = np.asarray(downpdc.points)
-        o3d.visualization.draw_geometries([downpdc])
+        # o3d.visualization.draw_geometries([downpdc])
 
         # uniformly sample 2048 points from each point cloud
         points = np.asarray(downpdc.points)
