@@ -408,6 +408,146 @@ class Vision3D:
         pc_center = base_cloud.get_center() 
         return points, pc_center
     
+    def crop_point_clouds_separately(self, pc1, pc2, pc3, pc4, pc5, no_transformation=False, color="Orange", ee_pos=np.ones(3), ee_rot=np.zeros((3,3)), icp=False):
+        if not no_transformation:
+            # get transform matrix from translation and rotation
+            pose_transform = np.eye(4)
+            pose_transform[:3,:3] = ee_rot
+            pose_transform[0:3,3] = ee_pos
+            pc1.transform(self.camera_transforms[1]).transform(pose_transform)
+            pc1.translate((0.065,-0.005,-0.01)) # NOTE: this is the calibration offset for ee pose: [0.625, 0.000, 0.325] 
+
+            # rotate end-effector camera by 180 degrees
+            R = pc1.get_rotation_matrix_from_xyz((0, 0, np.pi))
+            pc1.rotate(R, center=pc1.get_center())
+            pc1.translate((-0.06,-0.03,0.001))
+
+            # tralate fixed pcls for improved visualization
+            pc2.translate((-0.0015, 0.0005, 0.0)) 
+            pc3.translate((0.0015, -0.0015, 0.0))
+            pc4.translate((0.0, 0.0, -0.005))
+            pc5.translate((0.0, 0.004, 0.0))
+
+            # apply the transforms to each camera
+            pc2.transform(self.camera_transforms[2])
+            pc3.transform(self.camera_transforms[3])
+            pc4.transform(self.camera_transforms[4])
+            pc5.transform(self.camera_transforms[5])
+
+        # remove statistical outliers
+        pc1, ind = pc1.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        pc2, ind = pc2.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        pc3, ind = pc3.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        pc4, ind = pc4.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+        pc5, ind = pc5.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
+
+        # remove grippers
+        pc1 = self.remove_stage_grippers(pc1)
+        pc2 = self.remove_stage_grippers(pc2)
+        pc3 = self.remove_stage_grippers(pc3)
+        pc4 = self.remove_stage_grippers(pc4)
+        pc5 = self.remove_stage_grippers(pc5)
+
+        # remove background
+        pc1 = self.remove_background(pc1, radius=0.15, center=np.array([0.6, 0.0, 0.15]))
+        pc2 = self.remove_background(pc2, radius=0.15, center=np.array([0.6, 0.0, 0.15]))
+        pc3 = self.remove_background(pc3, radius=0.15, center=np.array([0.6, 0.0, 0.15]))
+        pc4 = self.remove_background(pc4, radius=0.15, center=np.array([0.6, 0.0, 0.15]))
+        pc5 = self.remove_background(pc5, radius=0.15, center=np.array([0.6, 0.0, 0.15]))
+
+        # color thresholding
+        pc1 = self.lab_color_crop(pc1, color)
+        pc2 = self.lab_color_crop(pc2, color)
+        pc3 = self.lab_color_crop(pc3, color)
+        pc4 = self.lab_color_crop(pc4, color)
+        pc5 = self.lab_color_crop(pc5, color)
+
+        # remove outliers again
+        pc1, ind = pc1.remove_radius_outlier(nb_points=20, radius=0.005) 
+        pc2, ind = pc2.remove_radius_outlier(nb_points=20, radius=0.005) 
+        pc3, ind = pc3.remove_radius_outlier(nb_points=20, radius=0.005) 
+        pc4, ind = pc4.remove_radius_outlier(nb_points=20, radius=0.005) 
+        pc5, ind = pc5.remove_radius_outlier(nb_points=20, radius=0.005) 
+
+        # estimate normals
+        pc1.estimate_normals()
+        pc2.estimate_normals()
+        pc3.estimate_normals()
+        pc4.estimate_normals()
+        pc5.estimate_normals()
+
+        # get downsampled 
+        down_pc1 = pc1.voxel_down_sample(voxel_size=0.0025)
+        down_pc2 = pc2.voxel_down_sample(voxel_size=0.0025)
+        down_pc3 = pc3.voxel_down_sample(voxel_size=0.0025)
+        down_pc4 = pc4.voxel_down_sample(voxel_size=0.0025)
+        down_pc5 = pc5.voxel_down_sample(voxel_size=0.0025)
+
+        if icp == False:
+            return down_pc1, down_pc2, down_pc3, down_pc4, down_pc5
+        
+        else:
+            # try icp alignment with substantially downsampled point cloud
+            target = o3d.geometry.PointCloud()
+            target.points = down_pc2.points
+            target.colors = down_pc2.colors
+            target.points.extend(down_pc3.points)
+            target.colors.extend(down_pc3.colors)
+            target.points.extend(down_pc4.points)
+            target.colors.extend(down_pc4.colors)
+            target.points.extend(down_pc5.points)
+            target.colors.extend(down_pc5.colors)
+
+            # downsample target to fixed 1000 points
+            target_downsampled = copy.deepcopy(target)
+            target_downsampled = target.voxel_down_sample(voxel_size=0.005)
+            source = copy.deepcopy(down_pc1)
+            source = down_pc1.voxel_down_sample(voxel_size=0.005)
+            # o3d.visualization.draw_geometries([source, target])
+
+            # get icp aligmnet
+            threshold = 0.01 #1 # 07 # 05
+            trans_init = np.asarray([[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0], [0.0, 0.0, 0.0, 1.0]])
+        
+            reg_p2p = o3d.pipelines.registration.registration_icp(source, target_downsampled, threshold, trans_init, 
+                                                                o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+                                                                o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2500))
+            source_copy = copy.deepcopy(down_pc1)
+            source_copy.transform(reg_p2p.transformation)
+
+            # add a final combination of the point clouds and remove outliers one more time after combined
+            calibrated_pcl = o3d.geometry.PointCloud()
+            calibrated_pcl.points = target.points
+            calibrated_pcl.colors = target.colors
+            calibrated_pcl.points.extend(source_copy.points)
+            calibrated_pcl.colors.extend(source_copy.colors)
+
+            calibrated_pcl, ind = calibrated_pcl.remove_statistical_outlier(nb_neighbors=25, std_ratio=2.0)
+
+            # downsample the accepted point cloud to fixed 2048 points
+            points = np.asarray(calibrated_pcl.points)
+            idxs = np.random.randint(0, len(points), size=2048)
+            # TODO: change to have certain number of points removed per pov (need to have some points from ee)
+            downsampled_points = points[idxs]
+            print("\n\nDownsampled points shape: ", downsampled_points.shape)
+
+            # get the center
+            pc_center = calibrated_pcl.get_center() 
+
+            return down_pc1, down_pc2, down_pc3, down_pc4, down_pc5, downsampled_points, pc_center
+
+        # # uniformly sample 2048 points from each point cloud
+        # points = np.asarray(downpdc.points)
+        # idxs = np.random.randint(0, len(points), size=2048)
+        # points = points[idxs]
+
+        # # re-process the processed_pcl to center
+        # # pc_center = np.array([0.6, 0.0, 0.24])
+        # pc_center = downpdc.get_center() 
+        # return points, pc_center
+    
     def unnormalize_fuse_point_clouds_no_base_ee_cam(self, pc1, pc2, pc3, pc4, pc5, no_transformation=False, color="Orange", ee_pos=np.ones(3), ee_rot=np.zeros((3,3))):
         if not no_transformation:
             # get transform matrix from translation and rotation
